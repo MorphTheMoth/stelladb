@@ -27,7 +27,7 @@ const UNRELEASED_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraDat
 const ITEM_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/item.json';
 const WORD_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/word.json';
 
-const { params, request } = Astro;
+const { params } = Astro;
 const id = params.id;
 
 const [data, unreleased, itemData, word] = await Promise.all([

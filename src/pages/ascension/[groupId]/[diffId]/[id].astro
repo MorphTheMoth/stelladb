@@ -20,7 +20,7 @@ export async function getStaticPaths() {
 
 const DATA_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/ascension.json';
 
-const { params, request } = Astro;
+const { params } = Astro;
 const groupId = params.groupId;
 const diffId = params.diffId;
 const id = params.id;

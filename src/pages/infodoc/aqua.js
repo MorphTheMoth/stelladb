@@ -2,7 +2,7 @@ import { nav, style } from '@/scripts/infodoc.js';
 
 export const prerender = false;
 
-export async function GET({ params, request }) {
+export async function GET() {
     const url = 'https://docs.google.com/spreadsheets/d/1otsS2C1RkXLaFSvp2SMOS-vtRBaEBpZlcgR361_fdAE/preview/sheet?gid=768061539';
 
     const response = await fetch(url);

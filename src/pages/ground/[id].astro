@@ -14,7 +14,7 @@ export async function getStaticPaths() {
 
 const DATA_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/ground.json';
 
-const { params, request } = Astro;
+const { params } = Astro;
 const id = params.id;
 
 const data = await fetch(DATA_URL).then((res) => res.json());
