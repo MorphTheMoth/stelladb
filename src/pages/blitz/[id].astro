@@ -1,5 +1,6 @@
 ---
 // @ts-nocheck
+import { Image } from 'astro:assets';
 import Layout from '@/layouts/Layout.astro';
 import Page from '@/components/Page.astro';
 import Tabs from '@/components/Tabs.astro';
@@ -47,7 +48,7 @@ if (!blitz) {
         </Fragment>
 
         <Fragment slot="left">
-            <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/mapchallenge/${blitz.icon}.webp`} alt={blitz.name} title={blitz.name} width="256" height="256" onerror="this.style.display='none'" />
+            <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/mapchallenge/${blitz.icon}.webp`} alt={blitz.name} title={blitz.name} width="256" height="256" densities={[1.25]} />
             <div class="info">
                 <p class="indent">
                     {`Type: ${blitz.type}`}<br />
@@ -89,13 +90,13 @@ if (!blitz) {
                     blitz.mechanic.map((mechanic) => (
                         <div class="mechanic">
                             <div class="mechanic-header">
-                                <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/monsterskill/bossrush/${mechanic.icon}.webp`} alt={mechanic.name} title={mechanic.name} width="64" height="64" onerror="this.style.display='none'" />
+                                <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/monsterskill/bossrush/${mechanic.icon}.webp`} alt={mechanic.name} title={mechanic.name} width="64" height="64" densities={[1.25]} />
                                 <h3>{mechanic.name}</h3>
                             </div>
                             <div class="indent">
                                 <p>{mechanic.desc}</p>
                                 {!mechanic.effectType?.length ? null : <p class="small">Effect: {mechanic.effectType.join(', ')}</p>}
-                                {!mechanic.buffIcon?.length ? null : <p class="small">Buff: {mechanic.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/monsterskill/bossrush/${icon}.webp`} alt={icon} title={icon} width="27" height="36" />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
+                                {!mechanic.buffIcon?.length ? null : <p class="small">Buff: {mechanic.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="26" height="36" densities={[1.25]} />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
                             </div>
                         </div>
                     ))

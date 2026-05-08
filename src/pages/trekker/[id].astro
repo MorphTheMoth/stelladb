@@ -1,5 +1,6 @@
 ---
 // @ts-nocheck
+import { Image } from 'astro:assets';
 import Layout from '@/layouts/Layout.astro';
 import Page from '@/components/Page.astro';
 import Tabs from '@/components/Tabs.astro';
@@ -47,6 +48,7 @@ const [data, unreleased, itemData, word] = await Promise.all([
 ]);
 const both = Object.assign({}, data, unreleased);
 const char = both[id];
+const isUnreleased = /^\d+/.test(char.name);
 
 if (char.tag[0] === char.class) {
     char.tag.shift();
@@ -69,7 +71,7 @@ if (!char) {
 }
 ---
 
-<Layout title={`${char.name} | stelladb`} image={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${id}02_XL.webp`} description={`${char.star}⭐ ${char.element}${emoji[char.element]} ${char.class}${emoji[char.attackType]} ${char.tag.join(' ')}`}>
+<Layout title={`${char.name} | stelladb`} image={isUnreleased ? undefined : `https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${id}02_XL.webp`} description={`${char.star}⭐ ${char.element}${emoji[char.element]} ${char.class}${emoji[char.attackType]} ${char.tag.join(' ')}`}>
     <Page data-json={JSON.stringify(char)} data-item={JSON.stringify(itemData)} data-word={JSON.stringify(word)}>
         <Fragment slot="header">
             <h1>{char.name}</h1>
@@ -84,17 +86,8 @@ if (!char) {
         </Fragment>
 
         <Fragment slot="left">
-            <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${id}02_XL.webp`} alt={char.name} title={char.name} width="256" height="340" onerror="this.style.display='none'" />
+            {!isUnreleased && <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${id}02_XL.webp`} alt={char.name} title={char.name} width="256" height="340" densities={[1.25]} />}
             <div class="info">
-                {
-                    /^\d/.test(char.name) && (
-                        <p class="indent">
-                            unreleased character <br />
-                            their kit is unfinished and can be changed a lot on release <br />
-                            do not blindly trust it yet <br />
-                        </p>
-                    )
-                }
                 <p class="indent">
                     {`${char.star}⭐`}<br />
                     {char.element}{emoji[char.element]}<br />
@@ -163,15 +156,23 @@ if (!char) {
                         <div class="item-image">
                             {
                                 char.upgrade.length &&
-                                    Array.from(new Set(char.upgrade.flatMap((u) => (u ? Object.keys(u) : [])))).map((itemName) => {
-                                        const item = Object.values(itemData).find((it) => it.name === itemName);
-                                        if (!item) return null;
-                                        return (
-                                            <div style={`background: url('/${item.rarity}.avif') center/cover no-repeat; width: 52px; height: 52px; display: inline-block; padding: 4px;`}>
-                                                <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/item/item_${item.id}.webp`} alt={itemName} title={itemName} width="52" height="52" />
-                                            </div>
-                                        );
-                                    })
+                                    Array.from(new Set(char.upgrade.flatMap((u) => (u ? Object.keys(u) : []))))
+                                        .sort((a, b) => {
+                                            const ida = Object.values(itemData).find((item) => item.name === a).id;
+                                            const idb = Object.values(itemData).find((item) => item.name === b).id;
+                                            if (ida === 1) return 1;
+                                            if (idb === 1) return -1;
+                                            return ida - idb;
+                                        })
+                                        .map((itemName) => {
+                                            const item = Object.values(itemData).find((it) => it.name === itemName);
+                                            if (!item) return null;
+                                            return (
+                                                <div style={`background: url('/${item.rarity}.avif') center/cover no-repeat; width: 52px; height: 52px; display: inline-block; padding: 4px;`}>
+                                                    <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/item/item_${item.id}.webp`} alt={itemName} title={itemName} width="52" height="52" densities={[1.25]} />
+                                                </div>
+                                            );
+                                        })
                             }
                         </div>
                         <p>
@@ -217,7 +218,7 @@ if (!char) {
                     char.normalAtk && (
                         <div class="normal-attack">
                             <div class="skill-header">
-                                <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/skill/${char.normalAtk.icon}.webp`} alt={char.normalAtk.name} title={char.normalAtk.name} width="64" height="64" onerror="this.style.display='none'" />
+                                {!isUnreleased && <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/skill/${char.normalAtk.icon}.webp`} alt={char.normalAtk.name} title={char.normalAtk.name} width="64" height="64" densities={[1.25]} />}
                                 <div>
                                     <h2>Normal attack: {char.normalAtk.name}</h2>
                                     <div>Energy Limit: {char.normalAtk.energyLimit}</div>
@@ -238,7 +239,7 @@ if (!char) {
                                 )}
                                 {!char.normalAtk.effectType.length ? null : <p class="small">Effect: {char.normalAtk.effectType.join(', ')}</p>}
                                 {!char.normalAtk.addAttrType.length ? null : <p class="small">AddAttr: {char.normalAtk.addAttrType.join(', ')}</p>}
-                                {!char.normalAtk.buffIcon.length ? null : <p class="small">Buff: {char.normalAtk.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="27" height="36" />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
+                                {!char.normalAtk.buffIcon.length ? null : <p class="small">Buff: {char.normalAtk.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="26" height="36" densities={[1.25]} />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
                                 {!char.normalAtk.effectData.length ? null : (
                                     <span class="tooltip small">
                                         hover this for effect data
@@ -261,7 +262,7 @@ if (!char) {
                     char.skill && (
                         <div class="skill">
                             <div class="skill-header">
-                                <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/skill/${char.skill.icon}.webp`} alt={char.skill.name} title={char.skill.name} width="64" height="64" onerror="this.style.display='none'" />
+                                {!isUnreleased && <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/skill/${char.skill.icon}.webp`} alt={char.skill.name} title={char.skill.name} width="64" height="64" densities={[1.25]} />}
                                 <div>
                                     <h2>Skill: {char.skill.name}</h2>
                                     <div>
@@ -283,7 +284,7 @@ if (!char) {
                                 )}
                                 {!char.skill.effectType.length ? null : <p class="small">Effect: {char.skill.effectType.join(', ')}</p>}
                                 {!char.skill.addAttrType.length ? null : <p class="small">AddAttr: {char.skill.addAttrType.join(', ')}</p>}
-                                {!char.skill.buffIcon.length ? null : <p class="small">Buff: {char.skill.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="27" height="36" />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
+                                {!char.skill.buffIcon.length ? null : <p class="small">Buff: {char.skill.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="26" height="36" densities={[1.25]} />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
                                 {!char.skill.effectData.length ? null : (
                                     <span class="tooltip small">
                                         hover this for effect data
@@ -306,7 +307,7 @@ if (!char) {
                     char.supportSkill && (
                         <div class="support-skill">
                             <div class="skill-header">
-                                <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/skill/${char.supportSkill.icon}.webp`} alt={char.supportSkill.name} title={char.supportSkill.name} width="64" height="64" onerror="this.style.display='none'" />
+                                {!isUnreleased && <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/skill/${char.supportSkill.icon}.webp`} alt={char.supportSkill.name} title={char.supportSkill.name} width="64" height="64" densities={[1.25]} />}
                                 <div>
                                     <h2>Support skill: {char.supportSkill.name}</h2>
                                     <div>Cooldown: {char.supportSkill.cooldown}</div>
@@ -327,7 +328,7 @@ if (!char) {
                                 )}
                                 {!char.supportSkill.effectType.length ? null : <p class="small">Effect: {char.supportSkill.effectType.join(', ')}</p>}
                                 {!char.supportSkill.addAttrType.length ? null : <p class="small">AddAttr: {char.supportSkill.addAttrType.join(', ')}</p>}
-                                {!char.supportSkill.buffIcon.length ? null : <p class="small">Buff: {char.supportSkill.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="27" height="36" />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
+                                {!char.supportSkill.buffIcon.length ? null : <p class="small">Buff: {char.supportSkill.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="26" height="36" densities={[1.25]} />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
                                 {!char.supportSkill.effectData.length ? null : (
                                     <span class="tooltip small">
                                         hover this for effect data
@@ -350,7 +351,7 @@ if (!char) {
                     char.ultimate && (
                         <div class="ultimate">
                             <div class="skill-header">
-                                <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/skill/${char.ultimate.icon}.webp`} alt={char.ultimate.name} title={char.ultimate.name} width="64" height="64" onerror="this.style.display='none'" />
+                                {!isUnreleased && <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/skill/${char.ultimate.icon}.webp`} alt={char.ultimate.name} title={char.ultimate.name} width="64" height="64" densities={[1.25]} />}
                                 <div>
                                     <h2>Ultimate: {char.ultimate.name}</h2>
                                     <div>
@@ -373,7 +374,7 @@ if (!char) {
                                 )}
                                 {!char.ultimate.effectType.length ? null : <p class="small">Effect: {char.ultimate.effectType.join(', ')}</p>}
                                 {!char.ultimate.addAttrType.length ? null : <p class="small">AddAttr: {char.ultimate.addAttrType.join(', ')}</p>}
-                                {!char.ultimate.buffIcon.length ? null : <p class="small">Buff: {char.ultimate.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="27" height="36" />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
+                                {!char.ultimate.buffIcon.length ? null : <p class="small">Buff: {char.ultimate.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="26" height="36" densities={[1.25]} />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
                                 {!char.ultimate.effectData.length ? null : (
                                     <span class="tooltip small">
                                         hover this for effect data
@@ -413,15 +414,23 @@ if (!char) {
                         <div class="item-image">
                             {
                                 char.skillUpgrade.length &&
-                                    Array.from(new Set(char.skillUpgrade.flatMap((u) => (u ? Object.keys(u) : [])))).map((itemName) => {
-                                        const item = Object.values(itemData).find((it) => it.name === itemName);
-                                        if (!item) return null;
-                                        return (
-                                            <div style={`background: url('/${item.rarity}.avif') center/cover no-repeat; width: 52px; height: 52px; display: inline-block; padding: 4px;`}>
-                                                <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/item/item_${item.id}.webp`} alt={itemName} title={itemName} width="52" height="52" />
-                                            </div>
-                                        );
-                                    })
+                                    Array.from(new Set(char.skillUpgrade.flatMap((u) => (u ? Object.keys(u) : []))))
+                                        .sort((a, b) => {
+                                            const ida = Object.values(itemData).find((item) => item.name === a).id;
+                                            const idb = Object.values(itemData).find((item) => item.name === b).id;
+                                            if (ida === 1) return 1;
+                                            if (idb === 1) return -1;
+                                            return ida - idb;
+                                        })
+                                        .map((itemName) => {
+                                            const item = Object.values(itemData).find((it) => it.name === itemName);
+                                            if (!item) return null;
+                                            return (
+                                                <div style={`background: url('/${item.rarity}.avif') center/cover no-repeat; width: 52px; height: 52px; display: inline-block; padding: 4px;`}>
+                                                    <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/item/item_${item.id}.webp`} alt={itemName} title={itemName} width="52" height="52" densities={[1.25]} />
+                                                </div>
+                                            );
+                                        })
                             }
                         </div>
                         <p>
@@ -466,7 +475,7 @@ if (!char) {
                     char.potential.mainCore?.length &&
                         char.potential.mainCore.map((pot) => (
                             <div class="potential-wrapper">
-                                <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/potential/${pot.id}.webp`} alt={pot.name} title={pot.name} width="120" height="153" onerror="this.style.display='none'" />
+                                {!isUnreleased && <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/potential/${pot.id}.webp`} alt={pot.name} title={pot.name} width="120" height="153" densities={[1.25]} />}
                                 <div class="potential" data-potential={JSON.stringify(pot)}>
                                     <h3>
                                         {pot.id % 100}. {pot.name}
@@ -486,7 +495,7 @@ if (!char) {
                                         )}
                                         {!pot.effectType.length ? null : <p class="small">Effect: {pot.effectType.join(', ')}</p>}
                                         {!pot.addAttrType.length ? null : <p class="small">AddAttr: {pot.addAttrType.join(', ')}</p>}
-                                        {!pot.buffIcon.length ? null : <p class="small">Buff: {pot.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="27" height="36" />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
+                                        {!pot.buffIcon.length ? null : <p class="small">Buff: {pot.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="26" height="36" densities={[1.25]} />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
                                         {!pot.effectData.length ? null : (
                                             <span class="tooltip small">
                                                 hover this for effect data
@@ -510,7 +519,7 @@ if (!char) {
                     char.potential.mainNormal?.length &&
                         char.potential.mainNormal.map((pot) => (
                             <div class="potential-wrapper">
-                                <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/potential/${pot.id}.webp`} alt={pot.name} title={pot.name} width="120" height="153" onerror="this.style.display='none'" />
+                                {!isUnreleased && <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/potential/${pot.id}.webp`} alt={pot.name} title={pot.name} width="120" height="153" densities={[1.25]} />}
                                 <div class="potential" data-potential={JSON.stringify(pot)}>
                                     <h3>
                                         {pot.id % 100}. {pot.name}
@@ -530,7 +539,7 @@ if (!char) {
                                         )}
                                         {!pot.effectType.length ? null : <p class="small">Effect: {pot.effectType.join(', ')}</p>}
                                         {!pot.addAttrType.length ? null : <p class="small">AddAttr: {pot.addAttrType.join(', ')}</p>}
-                                        {!pot.buffIcon.length ? null : <p class="small">Buff: {pot.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="27" height="36" />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
+                                        {!pot.buffIcon.length ? null : <p class="small">Buff: {pot.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="26" height="36" densities={[1.25]} />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
                                         {!pot.effectData.length ? null : (
                                             <span class="tooltip small">
                                                 hover this for effect data
@@ -554,7 +563,7 @@ if (!char) {
                     char.potential.common?.length &&
                         char.potential.common.map((pot) => (
                             <div class="potential-wrapper">
-                                <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/potential/${pot.id}.webp`} alt={pot.name} title={pot.name} width="120" height="153" onerror="this.style.display='none'" />
+                                {!isUnreleased && <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/potential/${pot.id}.webp`} alt={pot.name} title={pot.name} width="120" height="153" densities={[1.25]} />}
                                 <div class="potential" data-potential={JSON.stringify(pot)}>
                                     <h3>
                                         {pot.id % 100}. {pot.name}
@@ -574,7 +583,7 @@ if (!char) {
                                         )}
                                         {!pot.effectType.length ? null : <p class="small">Effect: {pot.effectType.join(', ')}</p>}
                                         {!pot.addAttrType.length ? null : <p class="small">AddAttr: {pot.addAttrType.join(', ')}</p>}
-                                        {!pot.buffIcon.length ? null : <p class="small">Buff: {pot.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="27" height="36" />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
+                                        {!pot.buffIcon.length ? null : <p class="small">Buff: {pot.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="26" height="36" densities={[1.25]} />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
                                         {!pot.effectData.length ? null : (
                                             <span class="tooltip small">
                                                 hover this for effect data
@@ -598,7 +607,7 @@ if (!char) {
                     char.potential.supportCore?.length &&
                         char.potential.supportCore.map((pot) => (
                             <div class="potential-wrapper">
-                                <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/potential/${pot.id}.webp`} alt={pot.name} title={pot.name} width="120" height="153" onerror="this.style.display='none'" />
+                                {!isUnreleased && <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/potential/${pot.id}.webp`} alt={pot.name} title={pot.name} width="120" height="153" densities={[1.25]} />}
                                 <div class="potential" data-potential={JSON.stringify(pot)}>
                                     <h3>
                                         {pot.id % 100}. {pot.name}
@@ -618,7 +627,7 @@ if (!char) {
                                         )}
                                         {!pot.effectType.length ? null : <p class="small">Effect: {pot.effectType.join(', ')}</p>}
                                         {!pot.addAttrType.length ? null : <p class="small">AddAttr: {pot.addAttrType.join(', ')}</p>}
-                                        {!pot.buffIcon.length ? null : <p class="small">Buff: {pot.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="27" height="36" />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
+                                        {!pot.buffIcon.length ? null : <p class="small">Buff: {pot.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="26" height="36" densities={[1.25]} />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
                                         {!pot.effectData.length ? null : (
                                             <span class="tooltip small">
                                                 hover this for effect data
@@ -642,7 +651,7 @@ if (!char) {
                     char.potential.supportNormal?.length &&
                         char.potential.supportNormal.map((pot) => (
                             <div class="potential-wrapper">
-                                <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/potential/${pot.id}.webp`} alt={pot.name} title={pot.name} width="120" height="153" onerror="this.style.display='none'" />
+                                {!isUnreleased && <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/potential/${pot.id}.webp`} alt={pot.name} title={pot.name} width="120" height="153" densities={[1.25]} />}
                                 <div class="potential" data-potential={JSON.stringify(pot)}>
                                     <h3>
                                         {pot.id % 100}. {pot.name}
@@ -662,7 +671,7 @@ if (!char) {
                                         )}
                                         {!pot.effectType.length ? null : <p class="small">Effect: {pot.effectType.join(', ')}</p>}
                                         {!pot.addAttrType.length ? null : <p class="small">AddAttr: {pot.addAttrType.join(', ')}</p>}
-                                        {!pot.buffIcon.length ? null : <p class="small">Buff: {pot.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="27" height="36" />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
+                                        {!pot.buffIcon.length ? null : <p class="small">Buff: {pot.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="26" height="36" densities={[1.25]} />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
                                         {!pot.effectData.length ? null : (
                                             <span class="tooltip small">
                                                 hover this for effect data
@@ -703,7 +712,7 @@ if (!char) {
                                 <p>{talent.boost[0].desc}</p>
                                 {!talent.boost[0].effectType.length ? null : <p class="small">Effect: {talent.boost[0].effectType.join(', ')}</p>}
                                 {!talent.boost[0].addAttrType.length ? null : <p class="small">AddAttr: {talent.boost[0].addAttrType.join(', ')}</p>}
-                                {!talent.boost[0].buffIcon.length ? null : <p class="small">Buff: {talent.boost[0].buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="27" height="36" />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
+                                {!talent.boost[0].buffIcon.length ? null : <p class="small">Buff: {talent.boost[0].buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="26" height="36" densities={[1.25]} />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
                                 {!talent.boost[0].effectData.length ? null : (
                                     <span class="tooltip small">
                                         hover this for effect data
@@ -760,7 +769,7 @@ if (!char) {
                         {
                             char.loveGift.map((giftName) => (
                                 <div style={`background: url('/${Object.values(itemData).find((it) => it.name === giftName).rarity}.avif') center/cover no-repeat; width: 52px; height: 52px; display: inline-block; padding: 4px;`}>
-                                    <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/item/item_${Object.values(itemData).find((it) => it.name === giftName).id}.webp`} alt={giftName} title={giftName} width="52" height="52" />
+                                    <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/item/item_${Object.values(itemData).find((it) => it.name === giftName).id}.webp`} alt={giftName} title={giftName} width="52" height="52" />
                                 </div>
                             ))
                         }
@@ -779,11 +788,11 @@ if (!char) {
 
                 <div class="hate-gift">
                     <h2>Hate gift</h2>
-                    <div class="indent" <div class="item-image">
+                    <div class="indent">
                         {
                             char.hateGift.map((giftName) => (
                                 <div style={`background: url('/${Object.values(itemData).find((it) => it.name === giftName).rarity}.avif') center/cover no-repeat; width: 52px; height: 52px; display: inline-block; padding: 4px;`}>
-                                    <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/item/item_${Object.values(itemData).find((it) => it.name === giftName).id}.webp`} alt={giftName} title={giftName} width="52" height="52" />
+                                    <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/item/item_${Object.values(itemData).find((it) => it.name === giftName).id}.webp`} alt={giftName} title={giftName} width="52" height="52" />
                                 </div>
                             ))
                         }
@@ -809,7 +818,7 @@ if (!char) {
                 {
                     char.date.map((date) => (
                         <div class="date">
-                            <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/datingeventcg/DatingSPCG_${date.id}.webp`} alt={date.name} title={date.name} width="128" height="128" />
+                            <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/datingeventcg/DatingSPCG_${date.id}.webp`} alt={date.name} title={date.name} width="128" height="128" densities={[1.25]} />
                             <div>
                                 <h2>{date.name}</h2>
                                 <p>
@@ -847,7 +856,7 @@ if (!char) {
 
                     return `<span class="tooltip word">
                         ${wordName}
-                        ${word[id].icon ? `<span class="tooltip-icon"><img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/zzzother/${word[id].icon}.webp" alt="${wordName}" title="${wordName}" onerror="this.style.display='none'"/></span>` : ''}
+                        ${word[id].icon ? `<span class="tooltip-icon"><img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/zzzother/${word[id].icon}.webp" alt="${wordName}" title="${wordName}"/></span>` : ''}
                         <div class="tooltip-text">
                             <b>${wordName}</b><br />
                             <p>${wordDesc}</p>
@@ -866,22 +875,13 @@ if (!char) {
 
                     return `<span class="tooltip word">
                         ${wordName}
-                        ${word[id].icon ? `<span class="tooltip-icon"><img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/zzzother/${word[id].icon}.webp" alt="${wordName}" title="${wordName}" onerror="this.style.display='none'"/></span>` : ''}
+                        ${word[id].icon ? `<span class="tooltip-icon"><img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/zzzother/${word[id].icon}.webp" alt="${wordName}" title="${wordName}"/></span>` : ''}
                         <div class="tooltip-text">
                             <b>${wordName}</b><br />
                             <p>${wordDesc}</p>
                         </div>
                     </span>`;
                 });
-        }
-
-        function itemNameToImage(itemName) {
-            const item = Object.values(itemData).find((i) => i.name === itemName);
-            return `
-                <div style="background: url('/${item.rarity}.avif') center/cover no-repeat; width: 52px; height: 52px; display: inline-block; padding: 4px;">
-                    <img src="/assetbundles/icon/item/item_${item.id}.webp" alt="${itemName}" title="${itemName}" width="52" height="52" onerror="this.src='https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/item/item_${item.id}.webp'" />
-                </div>
-            `;
         }
 
         const upgrade1Input = document.querySelector('#upgrade1');
@@ -973,10 +973,14 @@ if (!char) {
             }
 
             const sorted = sortByItemId(totals);
+            const sortedNames = sorted.map(([itemName]) => itemName);
 
             upgradeCost.innerHTML = sorted.map(([item, amount]) => `${item}: ${amount.toLocaleString('en-US')}<br />`).join('');
             if (+upgrade1Input.value > 7) upgradeCost.innerHTML = 'Max upgrade reached<br />' + upgradeCost.innerHTML;
-            upgradeCostItemImage.innerHTML = sorted.map(([itemName]) => itemNameToImage(itemName)).join('');
+            upgradeCostItemImage.querySelectorAll('div').forEach((div) => {
+                const itemName = div.querySelector('img').alt;
+                div.style.display = sortedNames.includes(itemName) ? 'inline-block' : 'none';
+            });
         }
 
         function sortByItemId(totals) {
@@ -1103,10 +1107,14 @@ if (!char) {
             }
 
             const sorted = sortByItemId(totals);
+            const sortedNames = sorted.map(([itemName]) => itemName);
 
             skillUpgradeCost.innerHTML = sorted.map(([item, amount]) => `${item}: ${amount.toLocaleString('en-US')}<br />`).join('');
             if (+skillLevel1Input.value > 9) skillUpgradeCost.innerHTML = 'Max upgrade reached<br />' + skillUpgradeCost.innerHTML;
-            skillUpgradeItemImage.innerHTML = sorted.map(([itemName]) => itemNameToImage(itemName)).join('');
+            skillUpgradeItemImage.querySelectorAll('div').forEach((div) => {
+                const itemName = div.querySelector('img').alt;
+                div.style.display = sortedNames.includes(itemName) ? 'inline-block' : 'none';
+            });
         }
 
         function replaceSkillParams(desc, params, tooltips, upgrade, level) {
@@ -1120,7 +1128,7 @@ if (!char) {
                     ${!tooltip.damageType ? '' : `Damage: ${tooltip.damageType}<br />`}
                     ${!tooltip.effectType ? '' : `Effect: ${tooltip.effectType}<br />`}
                     ${!tooltip.addAttrType ? '' : `AddAttr: ${tooltip.addAttrType}<br />`}
-                    ${!tooltip.buffIcon ? '' : `Buff: ${tooltip.buffIcon === 'No Icon' ? 'No Icon' : `<img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${tooltip.buffIcon}.webp" alt="${tooltip.buffIcon}" title="${tooltip.buffIcon}" width="27" height="36" />`}<br />`}
+                    ${!tooltip.buffIcon ? '' : `Buff: ${tooltip.buffIcon === 'No Icon' ? 'No Icon' : `<img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${tooltip.buffIcon}.webp" alt="${tooltip.buffIcon}" title="${tooltip.buffIcon}" width="26" height="36" />`}<br />`}
                 `.trim();
                 result = result.replaceAll(`&Param${index + 1}&`, !tooltipContent ? paramValue : `<span class="tooltip">${paramValue}<span class="tooltip-text">${tooltipContent}</span></span>`);
             });
@@ -1173,7 +1181,7 @@ if (!char) {
                         ${!tooltip.damageType ? '' : `Damage: ${tooltip.damageType}<br />`}
                         ${!tooltip.effectType ? '' : `Effect: ${tooltip.effectType}<br />`}
                         ${!tooltip.addAttrType ? '' : `AddAttr: ${tooltip.addAttrType}<br />`}
-                        ${!tooltip.buffIcon ? '' : `Buff: ${tooltip.buffIcon === 'No Icon' ? 'No Icon' : `<img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${tooltip.buffIcon}.webp" alt="${tooltip.buffIcon}" title="${tooltip.buffIcon}" width="27" height="36" />`}<br />`}
+                        ${!tooltip.buffIcon ? '' : `Buff: ${tooltip.buffIcon === 'No Icon' ? 'No Icon' : `<img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${tooltip.buffIcon}.webp" alt="${tooltip.buffIcon}" title="${tooltip.buffIcon}" width="26" height="36" />`}<br />`}
                     `.trim();
                     result = result.replaceAll(`&Param${index + 1}&`, !tooltipContent ? paramValue : `<span class="tooltip">${paramValue}<span class="tooltip-text">${tooltipContent}</span></span>`);
                 });
@@ -1186,7 +1194,7 @@ if (!char) {
                         ${!tooltip.damageType ? '' : `Damage: ${tooltip.damageType}<br />`}
                         ${!tooltip.effectType ? '' : `Effect: ${tooltip.effectType}<br />`}
                         ${!tooltip.addAttrType ? '' : `AddAttr: ${tooltip.addAttrType}<br />`}
-                        ${!tooltip.buffIcon ? '' : `Buff: ${tooltip.buffIcon === 'No Icon' ? 'No Icon' : `<img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${tooltip.buffIcon}.webp" alt="${tooltip.buffIcon}" title="${tooltip.buffIcon}" width="27" height="36" />`}<br />`}
+                        ${!tooltip.buffIcon ? '' : `Buff: ${tooltip.buffIcon === 'No Icon' ? 'No Icon' : `<img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${tooltip.buffIcon}.webp" alt="${tooltip.buffIcon}" title="${tooltip.buffIcon}" width="26" height="36" />`}<br />`}
                     `.trim();
                     result = result.replaceAll(`&HiddenParam${index + 1}&`, !tooltipContent ? paramValue : `<span class="tooltip">${paramValue}<span class="tooltip-text">${tooltipContent}</span></span>`);
                 });
@@ -1228,7 +1236,7 @@ if (!char) {
                     ${!tooltip.damageType ? '' : `Damage: ${tooltip.damageType}<br />`}
                     ${!tooltip.effectType ? '' : `Effect: ${tooltip.effectType}<br />`}
                     ${!tooltip.addAttrType ? '' : `AddAttr: ${tooltip.addAttrType}<br />`}
-                    ${!tooltip.buffIcon ? '' : `Buff: ${tooltip.buffIcon === 'No Icon' ? 'No Icon' : `<img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${tooltip.buffIcon}.webp" alt="${tooltip.buffIcon}" title="${tooltip.buffIcon}" width="27" height="36" />`}<br />`}
+                    ${!tooltip.buffIcon ? '' : `Buff: ${tooltip.buffIcon === 'No Icon' ? 'No Icon' : `<img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${tooltip.buffIcon}.webp" alt="${tooltip.buffIcon}" title="${tooltip.buffIcon}" width="26" height="36" />`}<br />`}
                 `.trim();
                     desc = desc.replaceAll(`&Param${index + 1}&`, !tooltipContent ? param : `<span class="tooltip">${param}<span class="tooltip-text">${tooltipContent}</span></span>`);
                 });

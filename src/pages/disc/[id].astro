@@ -1,5 +1,6 @@
 ---
 // @ts-nocheck
+import { Image, getImage } from 'astro:assets';
 import Layout from '@/layouts/Layout.astro';
 import Page from '@/components/Page.astro';
 import Tabs from '@/components/Tabs.astro';
@@ -32,6 +33,7 @@ const [data, itemData, word] = await Promise.all([
         .catch(() => ({})),
 ]);
 const disc = data[id];
+const isUnreleased = /^\d+/.test(disc.name);
 
 const emoji = {
     Aqua: '💧',
@@ -48,7 +50,7 @@ if (!disc) {
 }
 ---
 
-<Layout title={`${disc.name} | stelladb`} image={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/outfit/outfit_${id.replace(/^.{2}/, '')}.webp`} description={`${disc.star}⭐ ${disc.element}${emoji[disc.element]} ${disc.tag.join(' ')}`}>
+<Layout title={`${disc.name} | stelladb`} image={isUnreleased ? undefined : `https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/outfit/outfit_${id.replace(/^.{2}/, '')}.webp`} description={`${disc.star}⭐ ${disc.element}${emoji[disc.element]} ${disc.tag.join(' ')}`}>
     <Page data-json={JSON.stringify(disc)} data-item={JSON.stringify(itemData)} data-word={JSON.stringify(word)}>
         <Fragment slot="header">
             <h1>{disc.name}</h1>
@@ -67,7 +69,7 @@ if (!disc) {
         </Fragment>
 
         <Fragment slot="left">
-            <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/outfit/outfit_${id.replace(/^.{2}/, '')}.webp`} alt={disc.name} title={disc.name} width="256" height="256" onerror="this.style.display='none'" />
+            {!isUnreleased && <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/outfit/outfit_${id.replace(/^.{2}/, '')}.webp`} alt={disc.name} title={disc.name} width="256" height="256" densities={[1.25]} />}
             <div class="info">
                 <p class="indent">
                     {`${disc.star}⭐`}<br />
@@ -134,15 +136,23 @@ if (!disc) {
                         <div class="item-image">
                             {
                                 disc.upgrade.length &&
-                                    Array.from(new Set(disc.upgrade.flatMap((u) => (u ? Object.keys(u) : [])))).map((itemName) => {
-                                        const item = Object.values(itemData).find((it) => it.name === itemName);
-                                        if (!item) return null;
-                                        return (
-                                            <div style={`background: url('/${item.rarity}.avif') center/cover no-repeat; width: 52px; height: 52px; display: inline-block; padding: 4px;`}>
-                                                <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/item/item_${item.id}.webp`} alt={itemName} title={itemName} width="52" height="52" />
-                                            </div>
-                                        );
-                                    })
+                                    Array.from(new Set(disc.upgrade.flatMap((u) => (u ? Object.keys(u) : []))))
+                                        .sort((a, b) => {
+                                            const ida = Object.values(itemData).find((item) => item.name === a).id;
+                                            const idb = Object.values(itemData).find((item) => item.name === b).id;
+                                            if (ida === 1) return 1;
+                                            if (idb === 1) return -1;
+                                            return ida - idb;
+                                        })
+                                        .map((itemName) => {
+                                            const item = Object.values(itemData).find((it) => it.name === itemName);
+                                            if (!item) return null;
+                                            return (
+                                                <div style={`background: url('/${item.rarity}.avif') center/cover no-repeat; width: 52px; height: 52px; display: inline-block; padding: 4px;`}>
+                                                    <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/item/item_${item.id}.webp`} alt={itemName} title={itemName} width="52" height="52" densities={[1.25]} />
+                                                </div>
+                                            );
+                                        })
                             }
                         </div>
                         <p>
@@ -179,8 +189,8 @@ if (!disc) {
 
                 <div class="melody">
                     <div class="skill-header">
-                        <div class="skill-image" style={`background: url('https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/discskill/${disc.mainSkill.iconBg}.webp') center/cover no-repeat;`}>
-                            <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/discskill/${disc.mainSkill.icon}.webp`} alt={disc.mainSkill.name} title={disc.mainSkill.name} width="64" height="64" onerror="this.style.display='none'" />
+                        <div class="skill-image" style={`background: url('${(await getImage({ src: `https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/discskill/${disc.mainSkill.iconBg}.webp`, width: 80, height: 80 })).src}') center/cover no-repeat;`}>
+                            {!isUnreleased && <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/discskill/${disc.mainSkill.icon}.webp`} alt={disc.mainSkill.name} title={disc.mainSkill.name} width="64" height="64" densities={[1.25]} />}
                         </div>
                         <h2>{disc.mainSkill.name}</h2>
                     </div>
@@ -188,7 +198,7 @@ if (!disc) {
                         <p>{disc.mainSkill.description}</p>
                         {!disc.mainSkill.effectType.length ? null : <p class="small">Effect: {disc.mainSkill.effectType.join(', ')}</p>}
                         {!disc.mainSkill.addAttrType.length ? null : <p class="small">AddAttr: {disc.mainSkill.addAttrType.join(', ')}</p>}
-                        {!disc.mainSkill.buffIcon.length ? null : <p class="small">Buff: {disc.mainSkill.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="27" height="36" />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
+                        {!disc.mainSkill.buffIcon.length ? null : <p class="small">Buff: {disc.mainSkill.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="26" height="36" densities={[1.25]} />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
                         {
                             !disc.mainSkill.effectData.length ? null : (
                                 <span class="tooltip small">
@@ -237,8 +247,8 @@ if (!disc) {
 
                         <div class="harmony1">
                             <div class="skill-header">
-                                <div class="skill-image" style={`background: url('https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/discskill/${disc.secondarySkill1.iconBg}.webp') center/cover no-repeat;`}>
-                                    <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/discskill/${disc.secondarySkill1.icon}.webp`} alt={disc.secondarySkill1.name} title={disc.secondarySkill1.name} width="64" height="64" onerror="this.style.display='none'" />
+                                <div class="skill-image" style={`background: url('${(await getImage({ src: `https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/discskill/${disc.secondarySkill1.iconBg}.webp`, width: 80, height: 80 })).src}') center/cover no-repeat;`}>
+                                    {!isUnreleased && <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/discskill/${disc.secondarySkill1.icon}.webp`} alt={disc.secondarySkill1.name} title={disc.secondarySkill1.name} width="64" height="64" densities={[1.25]} />}
                                 </div>
                                 <h2>{disc.secondarySkill1.name}</h2>
                             </div>
@@ -246,7 +256,7 @@ if (!disc) {
                                 <p>{disc.secondarySkill1.description}</p>
                                 {!disc.secondarySkill1.effectType.length ? null : <p class="small">Effect: {disc.secondarySkill1.effectType.join(', ')}</p>}
                                 {!disc.secondarySkill1.addAttrType.length ? null : <p class="small">AddAttr: {disc.secondarySkill1.addAttrType.join(', ')}</p>}
-                                {!disc.secondarySkill1.buffIcon.length ? null : <p class="small">Buff: {disc.secondarySkill1.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="27" height="36" />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
+                                {!disc.secondarySkill1.buffIcon.length ? null : <p class="small">Buff: {disc.secondarySkill1.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="26" height="36" />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
                                 {!disc.secondarySkill1.effectData.length ? null : (
                                     <span class="tooltip small">
                                         hover this for effect data
@@ -265,11 +275,7 @@ if (!disc) {
                                         Array.from(new Set(disc.secondarySkill1.requirements.flatMap((r) => (r ? Object.keys(r) : [])))).map((itemName) => {
                                             const item = Object.values(itemData).find((it) => it.name === itemName);
                                             if (!item) return null;
-                                            return (
-                                                <div style={`background: url('/${item.rarity}.avif') center/cover no-repeat; width: 52px; height: 52px; display: inline-block; padding: 4px;`}>
-                                                    <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/item/item_${item.id}.webp`} alt={itemName} title={itemName} width="52" height="52" />
-                                                </div>
-                                            );
+                                            return <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/note/note_${item.id}_S.webp`} alt={itemName} title={itemName} width="52" height="52" densities={[1.25]} />;
                                         })}
                                 </div>
                                 <p class="requirements">
@@ -286,8 +292,8 @@ if (!disc) {
                         {disc.secondarySkill2 && (
                             <div class="harmony2">
                                 <div class="skill-header">
-                                    <div class="skill-image" style={`background: url('https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/discskill/${disc.secondarySkill2.iconBg}.webp') center/cover no-repeat;`}>
-                                        <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/discskill/${disc.secondarySkill2.icon}.webp`} alt={disc.secondarySkill2.name} title={disc.secondarySkill2.name} width="64" height="64" onerror="this.style.display='none'" />
+                                    <div class="skill-image" style={`background: url('${(await getImage({ src: `https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/discskill/${disc.secondarySkill2.iconBg}.webp`, width: 80, height: 80 })).src}') center/cover no-repeat;`}>
+                                        {!isUnreleased && <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/discskill/${disc.secondarySkill2.icon}.webp`} alt={disc.secondarySkill2.name} title={disc.secondarySkill2.name} width="64" height="64" densities={[1.25]} />}
                                     </div>
                                     <h2>{disc.secondarySkill2.name}</h2>
                                 </div>
@@ -295,7 +301,7 @@ if (!disc) {
                                     <p>{disc.secondarySkill2.description}</p>
                                     {!disc.secondarySkill2.effectType.length ? null : <p class="small">Effect: {disc.secondarySkill2.effectType.join(', ')}</p>}
                                     {!disc.secondarySkill2.addAttrType.length ? null : <p class="small">AddAttr: {disc.secondarySkill2.addAttrType.join(', ')}</p>}
-                                    {!disc.secondarySkill2.buffIcon.length ? null : <p class="small">Buff: {disc.secondarySkill2.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="27" height="36" />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
+                                    {!disc.secondarySkill2.buffIcon.length ? null : <p class="small">Buff: {disc.secondarySkill2.buffIcon.map((icon) => (icon === 'No Icon' ? 'No Icon' : <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/buff/${icon}.webp`} alt={icon} title={icon} width="26" height="36" />)).reduce((prev, curr) => [prev, ' ', curr])}</p>}
                                     {!disc.secondarySkill2.effectData.length ? null : (
                                         <span class="tooltip small">
                                             hover this for effect data
@@ -314,11 +320,7 @@ if (!disc) {
                                             Array.from(new Set(disc.secondarySkill2.requirements.flatMap((r) => (r ? Object.keys(r) : [])))).map((itemName) => {
                                                 const item = Object.values(itemData).find((it) => it.name === itemName);
                                                 if (!item) return null;
-                                                return (
-                                                    <div style={`background: url('/${item.rarity}.avif') center/cover no-repeat; width: 52px; height: 52px; display: inline-block; padding: 4px;`}>
-                                                        <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/item/item_${item.id}.webp`} alt={itemName} title={itemName} width="52" height="52" />
-                                                    </div>
-                                                );
+                                                return <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/note/note_${item.id}_S.webp`} alt={itemName} title={itemName} width="52" height="52" densities={[1.25]} />;
                                             })}
                                     </div>
                                     <p class="requirements">
@@ -353,11 +355,7 @@ if (!disc) {
                                     Array.from(new Set(disc.supportNote.flatMap((u) => (u ? Object.keys(u) : [])))).map((itemName) => {
                                         const item = Object.values(itemData).find((it) => it.name === itemName);
                                         if (!item) return null;
-                                        return (
-                                            <div style={`background: url('/${item.rarity}.avif') center/cover no-repeat; width: 52px; height: 52px; display: inline-block; padding: 4px;`}>
-                                                <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/item/item_${item.id}.webp`} alt={itemName} title={itemName} width="52" height="52" />
-                                            </div>
-                                        );
+                                        return <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/note/note_${item.id}_S.webp`} alt={itemName} title={itemName} width="52" height="52" densities={[1.25]} />;
                                     })
                             }
                         </div>
@@ -399,7 +397,7 @@ if (!disc) {
 
                     return `<span class="tooltip word">
                         ${wordName}
-                        ${word[id].icon ? `<span class="tooltip-icon"><img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/zzzother/${word[id].icon}.webp" alt="${wordName}" title="${wordName}" onerror="this.style.display='none'"/></span>` : ''}
+                        ${word[id].icon ? `<span class="tooltip-icon"><img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/zzzother/${word[id].icon}.webp" alt="${wordName}" title="${wordName}"/></span>` : ''}
                         <div class="tooltip-text">
                             <b>${wordName}</b><br />
                             <p>${wordDesc}</p>
@@ -418,22 +416,13 @@ if (!disc) {
 
                     return `<span class="tooltip word">
                         ${wordName}
-                        ${word[id].icon ? `<span class="tooltip-icon"><img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/zzzother/${word[id].icon}.webp" alt="${wordName}" title="${wordName}" onerror="this.style.display='none'"/></span>` : ''}
+                        ${word[id].icon ? `<span class="tooltip-icon"><img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/zzzother/${word[id].icon}.webp" alt="${wordName}" title="${wordName}"/></span>` : ''}
                         <div class="tooltip-text">
                             <b>${wordName}</b><br />
                             <p>${wordDesc}</p>
                         </div>
                     </span>`;
                 });
-        }
-
-        function itemNameToImage(itemName) {
-            const item = Object.values(itemData).find((i) => i.name === itemName);
-            return `
-                <div style="background: url('/${item.rarity}.avif') center/cover no-repeat; width: 52px; height: 52px; display: inline-block; padding: 4px;">
-                    <img src="/assetbundles/icon/item/item_${item.id}.webp" alt="${itemName}" title="${itemName}" width="52" height="52" onerror="this.src='https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/item/item_${item.id}.webp'" />
-                </div>
-            `;
         }
 
         const upgrade1Input = document.querySelector('#upgrade1');
@@ -530,10 +519,14 @@ if (!disc) {
             }
 
             const sorted = sortByItemId(totals);
+            const sortedNames = sorted.map(([item]) => item);
 
             upgradeCost.innerHTML = sorted.map(([item, amount]) => `${item}: ${amount.toLocaleString('en-US')}<br />`).join('');
             if (+upgrade1Input.value > 7) upgradeCost.innerHTML = 'Max upgrade reached<br />' + upgradeCost.innerHTML;
-            upgradeCostItemImage.innerHTML = sorted.map(([itemName]) => itemNameToImage(itemName)).join('');
+            upgradeCostItemImage.querySelectorAll('div').forEach((div) => {
+                const itemName = div.querySelector('img').alt;
+                div.style.display = sortedNames.includes(itemName) ? 'inline-block' : 'none';
+            });
         }
 
         function sortByItemId(totals) {
@@ -593,11 +586,9 @@ if (!disc) {
             const harmony1Name = document.querySelector('.harmony1 h2');
             const harmony1 = document.querySelector('.harmony1 p');
             const harmony1Req = document.querySelector('.harmony1 .requirements');
-            const harmony1ItemImage = document.querySelector('.harmony1 .item-image');
             const harmony2Name = document.querySelector('.harmony2 h2');
             const harmony2 = document.querySelector('.harmony2 p');
             const harmony2Req = document.querySelector('.harmony2 .requirements');
-            const harmony2ItemImage = document.querySelector('.harmony2 .item-image');
             const harmonyLangInput = document.querySelector('#harmony .langtabs-wrapper');
 
             let harmonyLevel = 1;
@@ -639,15 +630,6 @@ if (!disc) {
                     .map(([note, amount]) => `${note}: ${amount}`)
                     .join('<br />');
 
-                harmony1ItemImage.innerHTML = `
-                    ${Object.entries(skill1.requirements[harmonyLevel - 1])
-                        .map(([note, amount]) => {
-                            const item = Object.values(itemData).find((i) => i.name === note);
-                            return `<img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/note/note_${item.id}_S.webp" alt="${note}" title="${note}" width="64" height="64" />`;
-                        })
-                        .join('')}
-                `;
-
                 if (disc.secondarySkill2) {
                     const skill2 = disc.secondarySkill2;
                     const name2Lang = `name${harmonyLang === 'EN' ? '' : harmonyLang}`;
@@ -668,15 +650,6 @@ if (!disc) {
                     harmony2Req.innerHTML = Object.entries(skill2.requirements[harmonyLevel - 1])
                         .map(([note, amount]) => `${note}: ${amount}`)
                         .join('<br />');
-
-                    harmony2ItemImage.innerHTML = `
-                        ${Object.entries(skill2.requirements[harmonyLevel - 1])
-                            .map(([note, amount]) => {
-                                const item = Object.values(itemData).find((i) => i.name === note);
-                                return `<img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/note/note_${item.id}_S.webp" alt="${note}" title="${note}" width="64" height="64" />`;
-                            })
-                            .join('')}
-                    `;
                 }
             }
         }
@@ -684,7 +657,6 @@ if (!disc) {
         const upgrade2Input = document.querySelector('#upgrade2');
         const upgrade2Output = document.querySelector('.upgrade2-output');
         const note = document.querySelector('.note p');
-        const noteItemImage = document.querySelector('.note .item-image');
 
         let upgrade2 = 0;
 
@@ -698,15 +670,6 @@ if (!disc) {
             note.innerHTML = Object.entries(disc.supportNote[upgrade1])
                 .map(([note, amount]) => `${note}: ${amount}`)
                 .join('<br />');
-
-            noteItemImage.innerHTML = `
-                ${Object.entries(disc.supportNote[upgrade1])
-                    .map(([note, amount]) => {
-                        const item = Object.values(itemData).find((i) => i.name === note);
-                        return `<img src="https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/note/note_${item.id}_S.webp" alt="${note}" title="${note}" width="64" height="64" />`;
-                    })
-                    .join('')}
-            `;
         }
     </script>
 </Layout>

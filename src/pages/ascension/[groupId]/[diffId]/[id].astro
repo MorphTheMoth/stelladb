@@ -1,10 +1,8 @@
 ---
 // @ts-nocheck
-import Layout from '@/layouts/Layout.astro';
 import Page from '@/components/Page.astro';
-
-import Card from '@/components/Card.astro';
-import SearchableGrid from '@/components/SearchableGrid.astro';
+import Layout from '@/layouts/Layout.astro';
+import { Image } from 'astro:assets';
 
 export async function getStaticPaths() {
     const DATA_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/ascension.json';
@@ -53,7 +51,7 @@ if (!group || !diff || !monster) {
         </Fragment>
 
         <Fragment slot="left">
-            <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/monster/${monster.icon}.webp`} alt={monster.name} title={monster.name} width="256" height="256" onerror="this.style.display='none'" />
+            <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/monster/${monster.icon}.webp`} alt={monster.name} title={monster.name} width="256" height="256" densities={[1.25]} />
             <div class="info">
                 <p class="indent">
                     {`Type: ${monster.type}`}<br />

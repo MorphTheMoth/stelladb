@@ -1,8 +1,9 @@
 ---
 // @ts-nocheck
+import { Image } from 'astro:assets';
 import Layout from '@/layouts/Layout.astro';
-import Page from '@/components/Page.astro';
 import Tabs from '@/components/Tabs.astro';
+import Page from '@/components/Page.astro';
 
 export async function getStaticPaths() {
     const DATA_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/duel.json';
@@ -47,7 +48,7 @@ if (!duel) {
         </Fragment>
 
         <Fragment slot="left">
-            <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/monster/${duel.icon}.webp`} alt={duel.name} title={duel.name} width="256" height="256" onerror="this.style.display='none'" />
+            <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/monster/${duel.icon}.webp`} alt={duel.name} title={duel.name} width="256" height="256" densities={[1.25]} />
             <div class="info">
                 <p class="indent">
                     {`Type: ${duel.type}`}<br />
@@ -88,7 +89,7 @@ if (!duel) {
                             {group.map((mechanic) => (
                                 <div class="mechanic">
                                     <div class="mechanic-header">
-                                        <img src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/ui_activity/_${duel.activityId}/affix/${mechanic.icon}.webp`} alt={mechanic.name} title={mechanic.name} width="64" height="64" onerror="this.style.display='none'" />
+                                        <Image src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/ui_activity/_${duel.activityId}/affix/${mechanic.icon}.webp`} alt={mechanic.name} title={mechanic.name} width="64" height="64" densities={[1.25]} />
                                         <h3>
                                             {mechanic.name} ({mechanic.diff})
                                         </h3>

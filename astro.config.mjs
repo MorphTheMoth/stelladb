@@ -1,10 +1,9 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'fs';
-
 import cloudflare from '@astrojs/cloudflare';
-import { defineConfig } from 'astro/config';
-import { fileURLToPath } from 'url';
-import path from 'path';
 import sitemap from '@astrojs/sitemap';
+import { defineConfig } from 'astro/config';
+import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // https://astro.build/config
 export default defineConfig({
@@ -16,10 +15,6 @@ export default defineConfig({
         imageService: 'compile',
     }),
     integrations: [
-        downloadRemoteImage([
-            'https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/',
-            'https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/',
-        ]),
         sitemap(),
     ],
     vite: {
@@ -34,6 +29,9 @@ export default defineConfig({
     },
     prefetch: {
         prefetchAll: true
+    },
+    image: {
+        domains: ["raw.githubusercontent.com"],
     }
 });
 

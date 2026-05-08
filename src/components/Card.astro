@@ -1,11 +1,13 @@
 ---
+// @ts-nocheck
+import { Image, getImage, inferRemoteSize } from 'astro:assets';
 interface Props {
     href: string;
     name?: string;
     desc?: string;
     desc2?: string;
     star?: number;
-    image: string;
+    image?: string;
     inset?: number;
     element?: string;
     elementSize?: number;
@@ -19,7 +21,7 @@ const { href, name, desc, desc2, star, image, inset = 0, element, elementSize = 
 
 <div class={`card-border ${star ? `star${star}` : ''}`}>
     <a href={href} class="card">
-        <div class="image" style={`background-image: url(${image}); inset: ${inset}px; background-position: ${position};`}></div>
+        <div class="image" style={image ? `background-image: url(${(await getImage({ src: image, ...(await inferRemoteSize(image).then((size) => (size.width < size.height ? { width: 330, height: (330 * size.height) / size.width } : { height: 330, width: (330 * size.width) / size.height }))) })).src}); inset: ${inset}px; background-position: ${position};` : undefined}></div>
         {
             name && (
                 <div class="text">
@@ -35,14 +37,14 @@ const { href, name, desc, desc2, star, image, inset = 0, element, elementSize = 
                     <div class="char-class">{charClass}</div>
                     {attackType && (
                         <div class="attack-type">
-                            <img src={`/${attackType}.avif`} width="16" height="16" alt={attackType} />
+                            <Image src={`/${attackType}.avif`} width="16" height="16" alt={attackType} densities={[1.25]} />
                         </div>
                     )}
                 </div>
             )
         }
     </a>
-    {element && <img class="element" src={`/${element}.avif`} width={elementSize} height={elementSize} alt={element} />}
+    {element && <Image class="element" src={`/${element}.avif`} width={elementSize} height={elementSize} alt={element} densities={[1.25]} />}
 </div>
 
 <style>

@@ -1,9 +1,9 @@
 ---
 // @ts-nocheck
-import Layout from '@/layouts/Layout.astro';
 
 import Card from '@/components/Card.astro';
 import SearchableGrid from '@/components/SearchableGrid.astro';
+import Layout from '@/layouts/Layout.astro';
 
 const DATA_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/unreleased.json';
 const CHARACTERID_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/characterid.json';
@@ -54,7 +54,7 @@ const emoji = {
                             .join(' ')}
                         data-comingsoon={char.upgrade.length || char.skillUpgrade.length ? 'coming soon' : ''}
                     >
-                        <Card href={`/trekker/${id}`} name={char.name} star={char.star} image={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${id}02_XL.webp`} inset={-12} element={char.element} charClass={char.class} attackType={char.attackType} />
+                        <Card href={`/trekker/${id}`} name={char.name} star={char.star} element={char.element} charClass={char.class} attackType={char.attackType} />
                     </div>
                 ))
         }
