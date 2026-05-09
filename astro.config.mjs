@@ -27,9 +27,7 @@ export default defineConfig({
             external: ['buffer']
         }
     },
-    prefetch: {
-        prefetchAll: true
-    },
+    prefetch: true,
     image: {
         domains: ["raw.githubusercontent.com"],
     }

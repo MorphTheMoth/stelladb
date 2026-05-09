@@ -58,30 +58,30 @@ if (import.meta.env.SSR) {
     </head>
     <body>
         <nav>
-            <a href="/"><h1 class="logo">stelladb</h1></a>
+            <a href="/" data-astro-prefetch><h1 class="logo">stelladb</h1></a>
             <div class="navlinks">
-                <a href="/trekker">Trekker</a>
-                <a href="/disc">Disc</a>
-                <a href="/banner">Banner</a>
-                <a href="/lb">Leaderboard</a>
+                <a href="/trekker" data-astro-prefetch>Trekker</a>
+                <a href="/disc" data-astro-prefetch>Disc</a>
+                <a href="/banner" data-astro-prefetch>Banner</a>
+                <a href="/lb" data-astro-prefetch>Leaderboard</a>
                 <details>
                     <summary>Monster</summary>
                     <div>
-                        <a href="/ascension">Ascension</a>
-                        <a href="/arena">Menace Arena</a>
-                        <a href="/ground">Proving Ground</a>
-                        <a href="/blitz">Boss Blitz</a>
-                        <a href="/raid">Finale Echoing</a>
-                        <a href="/duel">Summit Show</a>
+                        <a href="/ascension" data-astro-prefetch>Ascension</a>
+                        <a href="/arena" data-astro-prefetch>Menace Arena</a>
+                        <a href="/ground" data-astro-prefetch>Proving Ground</a>
+                        <a href="/blitz" data-astro-prefetch>Boss Blitz</a>
+                        <a href="/raid" data-astro-prefetch>Finale Echoing</a>
+                        <a href="/duel" data-astro-prefetch>Summit Show</a>
                     </div>
                 </details>
                 <details>
                     <summary>Other</summary>
                     <div>
-                        <a href="/build">Build Preset</a>
-                        <a href="/emblem">Emblem</a>
+                        <a href="/build" data-astro-prefetch>Build Preset</a>
+                        <a href="/emblem" data-astro-prefetch>Emblem</a>
                         <a href="/infodoc">Infodoc</a>
-                        <a href="/unreleased">Unreleased</a>
+                        <a href="/unreleased" data-astro-prefetch>Unreleased</a>
                         <a href="https://gist.github.com/AutumnVN/91afd7a37a9743488419b70f07225950" target="_blank">Damage Formula ↗</a>
                         <a href="https://github.com/users/AutumnVN/projects/2" target="_blank">Known Issues ↗</a>
                     </div>
@@ -260,12 +260,12 @@ if (import.meta.env.SSR) {
             text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, label, url) => {
                 const href = escapeHtml(url.trim());
                 const lbl = escapeHtml(label.trim());
-                return `<a href="${href}" target="_blank" rel="noopener noreferrer">${lbl}</a>`;
+                return `<a href="${href}" target="_blank">${lbl}</a>`;
             });
 
             text = text.replace(/(^|[\s>])((https?:\/\/)[^\s<]+)/g, (m, pre, url) => {
                 const href = escapeHtml(url);
-                return `${pre}<a href="${href}" target="_blank" rel="noopener noreferrer">${href}</a>`;
+                return `${pre}<a href="${href}" target="_blank">${href}</a>`;
             });
 
             text = text.replace(/\\n/g, '<br>');
