@@ -12,22 +12,20 @@ export async function getStaticPaths() {
         Object.keys(data[groupId].diff).flatMap((diffId) =>
             Object.keys(data[groupId].diff[diffId].monster).map((id) => ({
                 params: { groupId, diffId, id },
+                props: {
+                    group: data[groupId],
+                    diff: data[groupId].diff[diffId],
+                    monster: data[groupId].diff[diffId].monster[id],
+                },
             })),
         ),
     );
 }
 
-const DATA_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/ascension.json';
-
-const { params } = Astro;
-const groupId = params.groupId;
-const diffId = params.diffId;
-const id = params.id;
-
-const data = await fetch(DATA_URL).then((res) => res.json());
-const group = data[groupId];
-const diff = group.diff[diffId];
-const monster = diff.monster[id];
+const {
+    params: { groupId, diffId, id },
+    props: { group, diff, monster },
+} = Astro;
 
 const emoji = {
     Aqua: '💧',

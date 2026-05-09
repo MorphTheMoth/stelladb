@@ -7,32 +7,31 @@ import Tabs from '@/components/Tabs.astro';
 
 export async function getStaticPaths() {
     const DATA_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/disc.json';
-    const data = await fetch(DATA_URL).then((res) => res.json());
+    const ITEM_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/item.json';
+    const WORD_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/word.json';
+
+    const [data, itemData, word] = await Promise.all([
+        fetch(DATA_URL)
+            .then((r) => r.json())
+            .catch(() => ({})),
+        fetch(ITEM_URL)
+            .then((r) => r.json())
+            .catch(() => ({})),
+        fetch(WORD_URL)
+            .then((r) => r.json())
+            .catch(() => ({})),
+    ]);
 
     return Object.keys(data).map((id) => ({
         params: { id },
+        props: { disc: data[id], itemData, word },
     }));
 }
 
-const DATA_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/disc.json';
-const ITEM_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/item.json';
-const WORD_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/word.json';
-
-const { params } = Astro;
-const id = params.id;
-
-const [data, itemData, word] = await Promise.all([
-    fetch(DATA_URL)
-        .then((r) => r.json())
-        .catch(() => ({})),
-    fetch(ITEM_URL)
-        .then((r) => r.json())
-        .catch(() => ({})),
-    fetch(WORD_URL)
-        .then((r) => r.json())
-        .catch(() => ({})),
-]);
-const disc = data[id];
+const {
+    params: { id },
+    props: { disc, itemData, word },
+} = Astro;
 const isUnreleased = /^\d+/.test(disc.name);
 
 const emoji = {

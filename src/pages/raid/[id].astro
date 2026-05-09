@@ -11,16 +11,14 @@ export async function getStaticPaths() {
 
     return Object.keys(data).map((id) => ({
         params: { id },
+        props: { raid: data[id] },
     }));
 }
 
-const DATA_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/raid.json';
-
-const { params, request } = Astro;
-const id = params.id;
-
-const data = await fetch(DATA_URL).then((res) => res.json());
-const raid = data[id];
+const {
+    params: { id },
+    props: { raid },
+} = Astro;
 
 const emoji = {
     Aqua: '💧',

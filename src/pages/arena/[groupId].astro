@@ -10,16 +10,14 @@ export async function getStaticPaths() {
 
     return Object.keys(data).map((groupId) => ({
         params: { groupId },
+        props: { group: data[groupId] },
     }));
 }
 
-const DATA_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/arena.json';
-
-const { params } = Astro;
-const groupId = params.groupId;
-
-const data = await fetch(DATA_URL).then((res) => res.json());
-const group = data[groupId];
+const {
+    params: { groupId },
+    props: { group },
+} = Astro;
 
 const emoji = {
     Aqua: '💧',

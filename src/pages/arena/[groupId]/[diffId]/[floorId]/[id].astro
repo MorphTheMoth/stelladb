@@ -13,25 +13,22 @@ export async function getStaticPaths() {
             Object.keys(data[groupId].diff[diffId].floor).flatMap((floorId) =>
                 Object.keys(data[groupId].diff[diffId].floor[floorId].monster).map((id) => ({
                     params: { groupId, diffId, floorId, id },
+                    props: {
+                        group: data[groupId],
+                        diff: data[groupId].diff[diffId],
+                        floor: data[groupId].diff[diffId].floor[floorId],
+                        monster: data[groupId].diff[diffId].floor[floorId].monster[id],
+                    },
                 })),
             ),
         ),
     );
 }
 
-const DATA_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/arena.json';
-
-const { params } = Astro;
-const groupId = params.groupId;
-const diffId = params.diffId;
-const floorId = params.floorId;
-const id = params.id;
-
-const data = await fetch(DATA_URL).then((res) => res.json());
-const group = data[groupId];
-const diff = group.diff[diffId];
-const floor = diff.floor[floorId];
-const monster = floor.monster[id];
+const {
+    params: { groupId, diffId, floorId, id },
+    props: { group, diff, floor, monster },
+} = Astro;
 
 const emoji = {
     Aqua: '💧',

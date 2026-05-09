@@ -11,16 +11,14 @@ export async function getStaticPaths() {
 
     return Object.keys(data).map((id) => ({
         params: { id },
+        props: { blitz: data[id] },
     }));
 }
 
-const DATA_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/blitz.json';
-
-const { params } = Astro;
-const id = params.id;
-
-const data = await fetch(DATA_URL).then((res) => res.json());
-const blitz = data[id];
+const {
+    params: { id },
+    props: { blitz },
+} = Astro;
 
 const emoji = {
     Aqua: '💧',
