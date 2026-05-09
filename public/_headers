@@ -1,5 +1,6 @@
 /*.html
   Link: </font.woff2>; rel=preload; as=font; type=font/woff2; crossorigin
+  Link: <https://chino.is-a.dev>; rel=preconnect; crossorigin
   Link: <https://api.lanyard.rest>; rel=preconnect; crossorigin
 /*.webp
   Cache-Control: public, max-age=604800, stale-while-revalidate=604800

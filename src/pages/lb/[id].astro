@@ -47,7 +47,7 @@ const metaRemoved = meta[id].removed || {};
 function headIconUrl(icon) {
     const prefix = icon > 100000 || [101, 102].includes(icon) ? 'player' : '';
     const id = icon === 101 ? 10001 : icon === 102 ? 10101 : icon;
-    return `https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/${prefix}head/${prefix}head_${id}_XXL.webp`;
+    return `https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/${prefix}head/${prefix}head_${id}_XXL.webp`;
 }
 
 const allData = processedRegions['all'] || {};
@@ -213,7 +213,7 @@ const allData = processedRegions['all'] || {};
 
                                                     <div class="col char">
                                                         <a class="char-link" href={`/trekker/${item.id}`}>
-                                                            <img class="char-icon" src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${item.id}02_XXL.webp`} alt={item.name} title={item.name} width="48" height="48" />
+                                                            <img class="char-icon" src={`https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${item.id}02_XXL.webp`} alt={item.name} title={item.name} width="48" height="48" />
                                                             <div class="player-name">{item.name}</div>
                                                         </a>
                                                     </div>
@@ -282,7 +282,7 @@ const allData = processedRegions['all'] || {};
                                                         <div class="team-icons">
                                                             {item.members.map((id) => (
                                                                 <a class="team-char" href={`/trekker/${id}`}>
-                                                                    <img class="char-icon" src={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${id}02_XXL.webp`} alt={characterIdData[id]} title={characterIdData[id]} width="48" height="48" />
+                                                                    <img class="char-icon" src={`https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${id}02_XXL.webp`} alt={characterIdData[id]} title={characterIdData[id]} width="48" height="48" />
                                                                 </a>
                                                             ))}
                                                         </div>
@@ -374,7 +374,7 @@ const allData = processedRegions['all'] || {};
     function headIconUrl(icon) {
         const prefix = icon > 100000 || [101, 102].includes(icon) ? 'player' : '';
         const id = icon === 101 ? 10001 : icon === 102 ? 10101 : icon;
-        return `https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/${prefix}head/${prefix}head_${id}_XXL.webp`;
+        return `https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/${prefix}head/${prefix}head_${id}_XXL.webp`;
     }
 
     function openModal(entry) {
@@ -428,7 +428,7 @@ const allData = processedRegions['all'] || {};
 
                 const img = document.createElement('div');
                 img.className = 'modal-char-image';
-                img.style.backgroundImage = `url(https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${c.Id}02_XXL.webp)`;
+                img.style.backgroundImage = `url(https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${c.Id}02_XXL.webp)`;
                 card.appendChild(img);
 
                 const label = document.createElement('div');
@@ -454,7 +454,7 @@ const allData = processedRegions['all'] || {};
                     discImg.className = 'modal-disc-image';
                     const discIdStr = String(d);
                     const discAssetId = discIdStr.length > 2 ? discIdStr.slice(2) : discIdStr;
-                    discImg.src = `https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/outfit/outfit_${discAssetId}.webp`;
+                    discImg.src = `https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/outfit/outfit_${discAssetId}.webp`;
                     discImg.alt = String(d);
                     discImg.width = 48;
                     discImg.height = 48;
@@ -477,7 +477,7 @@ const allData = processedRegions['all'] || {};
 
                     const noteImg = document.createElement('img');
                     noteImg.className = 'modal-note-image';
-                    noteImg.src = `https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/note/note_${n.Tid}_S.webp`;
+                    noteImg.src = `https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/note/note_${n.Tid}_S.webp`;
                     noteImg.alt = String(n.Tid);
                     noteImg.width = 36;
                     noteImg.height = 36;
