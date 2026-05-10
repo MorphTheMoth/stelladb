@@ -32,7 +32,7 @@ export default defineConfig({
     },
     prefetch: true,
     image: {
-        domains: ["raw.githubusercontent.com"],
+        domains: ['raw.githubusercontent.com'],
     }
 });
 
