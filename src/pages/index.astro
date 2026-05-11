@@ -1,7 +1,7 @@
 ---
+// @ts-nocheck
 import Layout from '@/layouts/Layout.astro';
-import { Image } from 'astro:assets';
-import Search from 'astro-pagefind/components/Search';
+import PagefindConfig from 'astro-pagefind/components/PagefindConfig.astro';
 ---
 
 <Layout title="stelladb" pagefindIgnore={true}>
@@ -12,20 +12,30 @@ import Search from 'astro-pagefind/components/Search';
                 <p id="kv-text"></p>
             </div>
 
-            <Search
-                id="search"
-                className="pagefind-ui"
-                uiOptions={{
-                    autofocus: true,
-                    pageSize: 10,
-                    resetStyles: false,
-                    showImages: true,
-                    translations: {
-                        placeholder: 'Search...',
-                        clear_search: '✖',
-                    },
-                }}
-            />
+            <PagefindConfig />
+            <pagefind-searchbox placeholder="Search..." autofocus="true" shortcut="/" data-pf-theme="dark">
+                <Fragment
+                    set:html={`
+                    <script type="text/pagefind-template">
+                        <a class="pf-searchbox-result" id="{{ aria.result_id }}" href="{{ meta.url | default(url) | safeUrl }}" role="option" aria-selected="false" aria-labelledby="{{ aria.title_id }}"{{#if excerpt}} aria-describedby="{{ aria.excerpt_id }}"{{/if}}>
+                            <img class="pf-searchbox-result-image" src="{{ meta.image | default('/favicon.ico') | safeUrl }}" alt="{{ meta.title | default('Untitled') }}" width="40" height="40" loading="lazy" />
+                            <div class="pf-searchbox-result-content">
+                                <p class="pf-searchbox-result-title" id="{{ aria.title_id }}">{{ meta.title | default("Untitled") }}</p>
+                                {{#if excerpt}}
+                                <p class="pf-searchbox-result-excerpt" id="{{ aria.excerpt_id }}">{{+ excerpt +}}</p>
+                                {{/if}}
+                            </div>
+                        </a>
+                    </script>
+                    <script type="text/pagefind-template" data-template="placeholder">
+                        <div class="pf-searchbox-result pf-searchbox-placeholder" aria-hidden="true">
+                            <p class="pf-searchbox-result-title pf-skeleton pf-skeleton-title"></p>
+                            <p class="pf-searchbox-result-excerpt pf-skeleton pf-skeleton-excerpt"></p>
+                        </div>
+                    </script>
+                `}
+                />
+            </pagefind-searchbox>
         </div>
 
         <img class="nazuna" alt="Nazuna" title="Nazuna" width="320" height="320" />
@@ -85,18 +95,6 @@ import Search from 'astro-pagefind/components/Search';
             audio.play();
         });
     }
-
-    const searchInput = document.querySelector('.pagefind-ui__search-input');
-
-    searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            const firstResult = document.querySelector('.pagefind-ui__result-link');
-
-            if (firstResult) {
-                window.location.href = firstResult.href;
-            }
-        }
-    });
 </script>
 
 <style>
@@ -145,6 +143,96 @@ import Search from 'astro-pagefind/components/Search';
 
         a {
             padding: 0.1rem 0.5rem;
+        }
+    }
+</style>
+
+<style is:global>
+    :is(*, #\#):is(*, #\#):is(*, #\#) .pf-searchbox {
+        --pf-text: var(--text);
+        --pf-text-secondary: var(--muted);
+        --pf-text-muted: var(--muted);
+        --pf-background: var(--bg);
+        --pf-border: var(--muted);
+        --pf-border-focus: var(--accent);
+        --pf-outline-focus: var(--accent);
+        --pf-skeleton: var(--bg2);
+        --pf-skeleton-shine: var(--bg3);
+        --pf-hover: var(--bg2);
+        --pf-mark: var(--accent);
+        --pf-font: Inter, 'Segoe UI', Arial, system-ui, sans-serif;
+        --pf-input-height: 3rem;
+        --pf-input-font-size: 1.25rem;
+        --pf-searchbox-max-width: 800px;
+        --pf-searchbox-dropdown-max-height: 400px;
+        display: block;
+        margin: 0 auto;
+        color-scheme: only dark;
+
+        .pf-searchbox-input-wrapper {
+            &::before {
+                inset-inline-start: 16px;
+            }
+
+            .pf-searchbox-input {
+                padding-inline-start: 40px;
+            }
+
+            .pf-trigger-shortcut {
+                inset-inline-end: 16px;
+            }
+        }
+
+        .pf-searchbox-dropdown {
+            .pf-searchbox-results {
+                &:empty {
+                    display: none;
+                }
+
+                .pf-searchbox-result {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.5rem;
+                    overflow: hidden;
+
+                    .pf-searchbox-result-image {
+                        flex-shrink: 0;
+                        border-radius: 4px;
+                        width: 44px;
+                        height: 44px;
+                        object-fit: cover;
+                        object-position: top;
+                    }
+
+                    .pf-searchbox-result-content {
+                        .pf-searchbox-result-title {
+                            font-size: 1rem;
+                        }
+
+                        .pf-searchbox-result-excerpt {
+                            font-size: 0.9rem;
+                        }
+                    }
+                }
+            }
+
+            .pf-searchbox-empty {
+                padding: 1rem;
+                font-size: 1rem;
+            }
+
+            .pf-searchbox-footer {
+                .pf-searchbox-footer-hint {
+                    font-size: 0.8rem;
+
+                    .pf-searchbox-footer-key {
+                        min-width: 20px;
+                        height: 18px;
+                        font-size: 11px;
+                    }
+                }
+            }
         }
     }
 </style>
