@@ -396,7 +396,7 @@ const allData = processedRegions['all'] || {};
                                                     </div>
 
                                                     <div class="col uses">
-                                                        {!isBB ? `${(Math.abs(item.topUser.teamScore) / 1000).toLocaleString('en-US')}s` : item.topUser.teamScore.toLocaleString('en-US')}
+                                                        <button class="all-score">{!isBB ? `${(Math.abs(item.topUser.teamScore) / 1000).toLocaleString('en-US')}s` : item.topUser.teamScore.toLocaleString('en-US')}</button>
 
                                                         <button class="team-top" data-id={item.topUser.id} title={item.topUser.id}>
                                                             {`#${item.topUser.rank} ${item.topUser.name}`}
@@ -686,6 +686,77 @@ const allData = processedRegions['all'] || {};
         modal.classList.remove('hidden');
     }
 
+    function openAllTeamModal(item, regionData) {
+        modalContent.innerHTML = '';
+
+        const h = document.createElement('div');
+        h.className = 'modal-heading';
+        const titleText = document.createElement('div');
+        titleText.textContent = `${item.name}`;
+        h.appendChild(titleText);
+        modalContent.appendChild(h);
+
+        const users = (item.users || []).slice();
+        users.sort((a, b) => {
+            const aScore = Math.abs(a.teamScore || 0);
+            const bScore = Math.abs(b.teamScore || 0);
+            return isBB ? bScore - aScore : aScore - bScore;
+        });
+
+        const list = document.createElement('div');
+        list.className = 'modal-team-list';
+
+        users.forEach((u) => {
+            const row = document.createElement('div');
+            row.className = 'modal-team-item';
+            row.tabIndex = 0;
+
+            const rank = document.createElement('div');
+            rank.className = 'modal-team-item-rank';
+            rank.textContent = `${u.rank}`;
+            row.appendChild(rank);
+
+            const entry = (regionData.Rank || []).find((e) => String(e.Id) === String(u.id)) || (regionData.Self && String(regionData.Self.Id) === String(u.id) ? regionData.Self : null);
+
+            const icon = document.createElement('img');
+            icon.className = 'modal-team-item-icon';
+            icon.src = headIconUrl(entry.HeadIcon);
+            icon.alt = u.name || '';
+            icon.width = 40;
+            icon.height = 40;
+            row.appendChild(icon);
+
+            const nameWrap = document.createElement('div');
+            nameWrap.className = 'modal-team-item-name';
+            nameWrap.textContent = `${u.name}`;
+            nameWrap.title = u.id;
+            row.appendChild(nameWrap);
+
+            const score = document.createElement('div');
+            score.className = 'modal-team-item-score';
+            score.textContent = !isBB ? `${(Math.abs(u.teamScore) / 1000).toLocaleString('en-US')}s` : (u.teamScore || 0).toLocaleString('en-US');
+            row.appendChild(score);
+
+            row.addEventListener('click', () => {
+                if (entry) openModal(entry);
+            });
+            row.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && entry) openModal(entry);
+            });
+
+            list.appendChild(row);
+        });
+
+        if (!users.length) {
+            const empty = document.createElement('div');
+            empty.textContent = 'No team entries available';
+            list.appendChild(empty);
+        }
+
+        modalContent.appendChild(list);
+        modal.classList.remove('hidden');
+    }
+
     function closeModal() {
         modal.classList.add('hidden');
     }
@@ -727,12 +798,24 @@ const allData = processedRegions['all'] || {};
     });
 
     document.addEventListener('click', async (ev) => {
-        const btn = ev.target.closest('.details-btn, .team-top');
+        const btn = ev.target.closest('.details-btn, .team-top, .all-score');
         if (!btn) return;
         const regionEl = btn.closest('.region-data');
         const region = regionEl?.dataset.region || defaultRegion;
 
         const rd = pageData[region] || {};
+
+        if (btn.classList.contains('all-score')) {
+            const row = btn.closest('.grid-row');
+            const key = row?.dataset.key;
+            const floor = regionEl?.dataset.floor || 'all';
+            const list = (rd.UsageTeamByFloor && rd.UsageTeamByFloor[floor]) || [];
+            const item = list.find((i) => String(i.key) === String(key));
+            if (item) {
+                openAllTeamModal(item, rd);
+            }
+            return;
+        }
 
         const id = btn.dataset.id;
         const entry = rd.Self && String(rd.Self.Id) === String(id) ? rd.Self : (rd.Rank || []).find((e) => String(e.Id) === String(id));
@@ -1020,13 +1103,25 @@ const allData = processedRegions['all'] || {};
             text-align: center;
         }
 
-        .team-usage .team-top {
+        .team-usage button {
             display: block;
             cursor: pointer;
             margin: 0 auto;
             border: none;
             background: transparent;
             padding: 0;
+        }
+
+        .team-usage .all-score {
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        .team-usage .all-score:hover {
+            color: var(--accent);
+        }
+
+        .team-usage .team-top {
             color: var(--muted);
             font-weight: 400;
             font-size: 0.85rem;
@@ -1272,5 +1367,52 @@ const allData = processedRegions['all'] || {};
         height: 48px;
         color: var(--muted);
         font-size: 2rem;
+    }
+
+    .modal-team-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-team-item {
+        display: grid;
+        grid-template-columns: 56px 40px 1fr 120px;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        border-bottom: 1px solid var(--bg2);
+        background: transparent;
+        padding: 0.5rem;
+    }
+
+    .modal-team-item:hover {
+        background: var(--bg2);
+    }
+
+    .modal-team-item-rank {
+        font-weight: 700;
+        font-size: 1.25rem;
+        text-align: center;
+    }
+
+    .modal-team-item-icon {
+        flex-shrink: 0;
+        border-radius: 4px;
+        background: var(--bg2);
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+    }
+
+    .modal-team-item-name {
+        font-weight: 600;
+        text-align: left;
+    }
+
+    .modal-team-item-score {
+        flex-shrink: 0;
+        min-width: 120px;
+        font-weight: 700;
+        text-align: center;
     }
 </style>
