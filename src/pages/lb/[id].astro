@@ -35,6 +35,15 @@ if (!processedRegions) {
 const defaultRegion = 'en';
 const data = processedRegions[defaultRegion] || {};
 const defaultRemoved = (meta[id].removed && meta[id].removed[defaultRegion]) || [];
+const regionTabs = ['en', 'jp', 'kr', 'tw', ...(processedRegions.cn ? ['cn'] : []), 'all'];
+const regionLabels = {
+    en: 'EN',
+    jp: 'JP',
+    kr: 'KR',
+    tw: 'TW',
+    cn: 'CN',
+    all: 'ALL',
+};
 
 const isBB = /^bb/.test(id);
 const season = id.match(/\d+/)?.[0];
@@ -61,11 +70,11 @@ const allData = processedRegions['all'] || {};
             <div class="tabs-container">
                 <div class="region-tabs">
                     <Tabs>
-                        <button class="tab active" data-tab="en">EN</button>
-                        <button class="tab" data-tab="jp">JP</button>
-                        <button class="tab" data-tab="kr">KR</button>
-                        <button class="tab" data-tab="tw">TW</button>
-                        <button class="tab" data-tab="all">ALL</button>
+                        {regionTabs.map((region) => (
+                            <button class={`tab${region === defaultRegion ? ' active' : ''}`} data-tab={region}>
+                                {regionLabels[region] || region.toUpperCase()}
+                            </button>
+                        ))}
                     </Tabs>
                 </div>
 
