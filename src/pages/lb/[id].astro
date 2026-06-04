@@ -10,15 +10,15 @@ const id = params.id;
 
 const META_URL = 'https://raw.githubusercontent.com/AutumnVN/ssleaderboard/refs/heads/main/meta.json';
 const CHARACTERID_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/characterid.json';
-const PROCESSED_URL = `https://raw.githubusercontent.com/AutumnVN/ssleaderboard/refs/heads/main/${id}.json`;
-const [meta, characterIdData, processedData] = await Promise.all([
+const SEASON_URL = `https://raw.githubusercontent.com/AutumnVN/ssleaderboard/refs/heads/main/${id}.json`;
+const [meta, characterIdData, seasonData] = await Promise.all([
     fetch(META_URL)
         .then((r) => r.json())
         .catch(() => ({})),
     fetch(CHARACTERID_URL)
         .then((r) => r.json())
         .catch(() => ({})),
-    fetch(PROCESSED_URL)
+    fetch(SEASON_URL)
         .then((r) => r.json())
         .catch(() => null),
 ]);
@@ -27,15 +27,15 @@ if (!meta[id]) {
     return Astro.redirect('/404');
 }
 
-const processedRegions = processedData.processedRegions;
-if (!processedRegions) {
+const region = seasonData.region;
+if (!region) {
     return Astro.redirect('/404');
 }
 
 const defaultRegion = 'en';
-const data = processedRegions[defaultRegion] || {};
+const data = region[defaultRegion] || {};
 const defaultRemoved = (meta[id].removed && meta[id].removed[defaultRegion]) || [];
-const regionTabs = ['en', 'jp', 'kr', 'tw', ...(processedRegions.cn ? ['cn'] : []), 'all'];
+const regionTabs = ['en', 'jp', 'kr', 'tw', ...(region.cn ? ['cn'] : []), 'all'];
 const regionLabels = {
     en: 'EN',
     jp: 'JP',
@@ -59,22 +59,24 @@ function headIconUrl(icon) {
     return `https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/${prefix}head/${prefix}head_${id}_XXL.webp`;
 }
 
-const allData = processedRegions['all'] || {};
+const allData = region['all'] || {};
 ---
 
 <Layout title={`${name} Leaderboard | stelladb`} description={`${(allData.Total || 0).toLocaleString('en-US')} players total${allData.Rank && allData.Rank[0] ? `, #1 ${allData.Rank[0].NickName}: ${allData.Rank[0].Score.toLocaleString('en-US')}` : ''}`} image={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/${isBB ? 'mapchallenge' : 'monster'}/${firstFloorIcon}.webp`}>
-    <div class="page" data-json={JSON.stringify(processedRegions)} data-region={defaultRegion} data-removed={JSON.stringify(metaRemoved)} data-floor={JSON.stringify(floorMap)} data-chars={JSON.stringify(characterIdData)} data-isbb={isBB}>
+    <div class="page" data-json={JSON.stringify(region)} data-region={defaultRegion} data-removed={JSON.stringify(metaRemoved)} data-floor={JSON.stringify(floorMap)} data-chars={JSON.stringify(characterIdData)} data-isbb={isBB}>
         <div class="header">
             <h1>{name} Leaderboard</h1>
 
             <div class="tabs-container">
                 <div class="region-tabs">
                     <Tabs>
-                        {regionTabs.map((region) => (
-                            <button class={`tab${region === defaultRegion ? ' active' : ''}`} data-tab={region}>
-                                {regionLabels[region] || region.toUpperCase()}
-                            </button>
-                        ))}
+                        {
+                            regionTabs.map((region) => (
+                                <button class={`tab${region === defaultRegion ? ' active' : ''}`} data-tab={region}>
+                                    {regionLabels[region] || region.toUpperCase()}
+                                </button>
+                            ))
+                        }
                     </Tabs>
                 </div>
 
@@ -90,8 +92,8 @@ const allData = processedRegions['all'] || {};
         <div class="content">
             <div class="players tab-panel" id="players">
                 {
-                    Object.keys(processedRegions).map((rk) => {
-                        const rd = processedRegions[rk] || {};
+                    Object.keys(region).map((rk) => {
+                        const rd = region[rk] || {};
                         return (
                             <div class="region-data" data-region={rk} hidden={rk !== defaultRegion}>
                                 <div class="leaderboard-header">
@@ -207,8 +209,8 @@ const allData = processedRegions['all'] || {};
                     </div>
 
                     {
-                        Object.keys(processedRegions).map((rk) => {
-                            const rd = processedRegions[rk] || {};
+                        Object.keys(region).map((rk) => {
+                            const rd = region[rk] || {};
                             const floorKeys = ['all', ...Object.keys(floor || {})];
                             return floorKeys.map((fk) => {
                                 const list = (rd.UsageByFloor && rd.UsageByFloor[fk]) || [];
@@ -274,8 +276,8 @@ const allData = processedRegions['all'] || {};
                     </div>
 
                     {
-                        Object.keys(processedRegions).map((rk) => {
-                            const rd = processedRegions[rk] || {};
+                        Object.keys(region).map((rk) => {
+                            const rd = region[rk] || {};
                             const floorKeys = ['all', ...Object.keys(floor || {})];
                             return floorKeys.map((fk) => {
                                 const list = (rd.UsageTeamByFloor && rd.UsageTeamByFloor[fk]) || [];
@@ -348,8 +350,8 @@ const allData = processedRegions['all'] || {};
                     </div>
 
                     {
-                        Object.keys(processedRegions).map((rk) => {
-                            const rd = processedRegions[rk] || {};
+                        Object.keys(region).map((rk) => {
+                            const rd = region[rk] || {};
                             const floorKeys = ['all', ...Object.keys(floor || {})];
 
                             return floorKeys.map((fk) => {
