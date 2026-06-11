@@ -3,125 +3,117 @@
 import Layout from '@/layouts/Layout.astro';
 import Tabs from '@/components/Tabs.astro';
 
-export const prerender = false;
+export async function getStaticPaths() {
+    const META_URL = 'https://raw.githubusercontent.com/AutumnVN/ssleaderboard/refs/heads/main/meta.json';
+    const meta = await fetch(META_URL).then((r) => r.json());
+    return Object.keys(meta).map((id) => ({ params: { id }, props: { meta: JSON.stringify(meta[id]) } }));
+}
 
-const { params } = Astro;
+const { params, props } = Astro;
 const id = params.id;
-
-const META_URL = 'https://raw.githubusercontent.com/AutumnVN/ssleaderboard/refs/heads/main/meta.json';
-const CHARACTERID_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/characterid.json';
-const SEASON_URL = `https://raw.githubusercontent.com/AutumnVN/ssleaderboard/refs/heads/main/${id}.json`;
-const [meta, characterIdData, seasonData] = await Promise.all([
-    fetch(META_URL)
-        .then((r) => r.json())
-        .catch(() => ({})),
-    fetch(CHARACTERID_URL)
-        .then((r) => r.json())
-        .catch(() => ({})),
-    fetch(SEASON_URL)
-        .then((r) => r.json())
-        .catch(() => null),
-]);
-
-if (!meta[id]) {
-    return Astro.redirect('/404');
-}
-
-const region = seasonData.region;
-if (!region) {
-    return Astro.redirect('/404');
-}
-
-const defaultRegion = 'en';
-const data = region[defaultRegion] || {};
-const defaultRemoved = (meta[id].removed && meta[id].removed[defaultRegion]) || [];
-const regionTabs = ['en', 'jp', 'kr', 'tw', ...(region.cn ? ['cn'] : []), 'all'];
-const regionLabels = {
-    en: 'EN',
-    jp: 'JP',
-    kr: 'KR',
-    tw: 'TW',
-    cn: 'CN',
-    all: 'ALL',
-};
-
+const meta = JSON.parse(props.meta);
 const isBB = /^bb/.test(id);
 const season = id.match(/\d+/)?.[0];
 const name = isBB ? `Boss Blitz S${season}` : `Finale Echoing S${season}`;
-const floor = meta[id].floor;
-const floorMap = floor;
-const firstFloorIcon = Object.values(floor)[0]?.icon;
-const metaRemoved = meta[id].removed || {};
-
-function headIconUrl(icon) {
-    const prefix = icon > 100000 || [101, 102].includes(icon) ? 'player' : '';
-    const id = icon === 101 ? 10001 : icon === 102 ? 10101 : icon;
-    return `https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/${prefix}head/${prefix}head_${id}_XXL.webp`;
-}
-
-const allData = region['all'] || {};
 ---
 
-<Layout title={`${name} Leaderboard | stelladb`} description={`${(allData.Total || 0).toLocaleString('en-US')} players total${allData.Rank && allData.Rank[0] ? `, #1 ${allData.Rank[0].NickName}: ${allData.Rank[0].Score.toLocaleString('en-US')}` : ''}`} image={`https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/${isBB ? 'mapchallenge' : 'monster'}/${firstFloorIcon}.webp`}>
-    <div class="page" data-json={JSON.stringify(region)} data-region={defaultRegion} data-removed={JSON.stringify(metaRemoved)} data-floor={JSON.stringify(floorMap)} data-chars={JSON.stringify(characterIdData)} data-isbb={isBB}>
+<Layout title={`${name} Leaderboard | stelladb`}>
+    <div class="lb-page" data-meta={JSON.stringify(meta)}></div>
+</Layout>
+
+<script>
+    // @ts-nocheck
+    const id = location.pathname.split('/').filter(Boolean).pop();
+    const SEASON_URL = `https://raw.githubusercontent.com/AutumnVN/ssleaderboard/refs/heads/main/${id}.json`;
+    const CHARACTER_ID_URL = 'https://raw.githubusercontent.com/AutumnVN/StellaSoraData/refs/heads/main/characterid.json';
+    const [seasonData, characterIdData] = await Promise.all([fetch(SEASON_URL).then((r) => r.json()), fetch(CHARACTER_ID_URL).then((r) => r.json())]);
+    const regionData = seasonData.region;
+    const regionTabs = ['en', 'jp', 'kr', 'tw', ...(regionData.cn ? ['cn'] : []), 'all'];
+    const regionLabels = {
+        en: 'EN',
+        jp: 'JP',
+        kr: 'KR',
+        tw: 'TW',
+        cn: 'CN',
+        all: 'ALL',
+    };
+    const pageEl = document.querySelector('.lb-page');
+    const meta = JSON.parse(pageEl.dataset.meta);
+    const isBB = /^bb/.test(id);
+    const season = id.match(/\d+/)?.[0];
+    const name = isBB ? `Boss Blitz S${season}` : `Finale Echoing S${season}`;
+    const floorData = meta.floor;
+    const removedData = meta.removed || {};
+
+    pageEl.innerHTML = `
         <div class="header">
-            <h1>{name} Leaderboard</h1>
+            <h1>${name} Leaderboard</h1>
 
             <div class="tabs-container">
                 <div class="region-tabs">
-                    <Tabs>
-                        {
-                            regionTabs.map((region) => (
-                                <button class={`tab${region === defaultRegion ? ' active' : ''}`} data-tab={region}>
-                                    {regionLabels[region] || region.toUpperCase()}
+                    <div class="tabs-wrapper">
+                        <nav class="tabs">
+                            ${regionTabs
+                                .map(
+                                    (region) => `
+                                <button class="tab${region === 'en' ? ' active' : ''}" data-tab="${region}">
+                                    ${regionLabels[region] || region.toUpperCase()}
                                 </button>
-                            ))
-                        }
-                    </Tabs>
+                            `,
+                                )
+                                .join('')}
+                        </nav>
+                    </div>
                 </div>
 
-                <Tabs>
-                    <button class="tab active" data-tab="players">Player</button>
-                    <button class="tab" data-tab="char-usage">Trekker</button>
-                    <button class="tab" data-tab="team-usage">Team</button>
-                    <button class="tab" data-tab="team-score">Score</button>
-                </Tabs>
+                <div class="tabs-wrapper">
+                    <nav class="tabs">
+                        <button class="tab active" data-tab="players">Player</button>
+                        <button class="tab" data-tab="char-usage">Trekker</button>
+                        <button class="tab" data-tab="team-usage">Team</button>
+                        <button class="tab" data-tab="team-score">Score</button>
+                    </nav>
+                </div>
             </div>
         </div>
 
         <div class="content">
             <div class="players tab-panel" id="players">
-                {
-                    Object.keys(region).map((rk) => {
-                        const rd = region[rk] || {};
-                        return (
-                            <div class="region-data" data-region={rk} hidden={rk !== defaultRegion}>
+                ${Object.keys(regionData)
+                    .map((rk) => {
+                        const rd = regionData[rk] || {};
+                        return `
+                            <div class="region-data" data-region="${rk}" ${rk !== 'en' ? 'hidden' : ''}>
                                 <div class="leaderboard-header">
                                     <p>
-                                        {(rd.Total || 0).toLocaleString('en-US')} players total • last updated <span class="update-time" data-time={(rd.LastRefreshTime || 0) * 1000} />
-                                        {metaRemoved[rk] && metaRemoved[rk].length ? (
-                                            <>
+                                        ${(rd.Total || 0).toLocaleString('en-US')} players total • last updated <span class="update-time" data-time="${(rd.LastRefreshTime || 0) * 1000}"></span>
+                                        ${
+                                            removedData[rk] && removedData[rk].length
+                                                ? `
                                                 <br />
                                                 <span class="tooltip">
-                                                    {metaRemoved[rk].length} removed by yostar or overwrited their score
+                                                    ${removedData[rk].length} removed by yostar or overwrited their score
                                                     <span class="tooltip-text">
-                                                        {metaRemoved[rk].map((entry) => (
-                                                            <>
-                                                                {entry}
+                                                        ${removedData[rk]
+                                                            .map(
+                                                                (entry) => `
+                                                                ${entry}
                                                                 <br />
-                                                            </>
-                                                        ))}
+                                                        `,
+                                                            )
+                                                            .join('')}
                                                     </span>
                                                 </span>
-                                            </>
-                                        ) : null}
+                                        `
+                                                : ''
+                                        }
                                     </p>
                                     <p class="rank-cutoff">
-                                        10%: #{Math.floor((rd.Total || 0) / 10)}
+                                        10%: #${Math.floor((rd.Total || 0) / 10)}
                                         <br />
-                                        20%: #{Math.floor((rd.Total || 0) / 5)}
+                                        20%: #${Math.floor((rd.Total || 0) / 5)}
                                         <br />
-                                        50%: #{Math.floor((rd.Total || 0) / 2)}
+                                        50%: #${Math.floor((rd.Total || 0) / 2)}
                                     </p>
                                 </div>
 
@@ -132,70 +124,85 @@ const allData = region['all'] || {};
                                         <div class="col score">Score</div>
                                     </div>
 
-                                    {(rd.Rank || []).map((entry) => (
-                                        <div class="grid-row" data-id={entry.Id}>
+                                    ${(rd.Rank || [])
+                                        .map(
+                                            (entry) => `
+                                        <div class="grid-row" data-id="${entry.Id}">
                                             <div class="col rank">
-                                                <div class="rank-num">{entry.Rank}</div>
+                                                <div class="rank-num">${entry.Rank}</div>
                                             </div>
 
-                                            <div class="col player" title={entry.Id}>
-                                                <img class="player-head" src={headIconUrl(entry.HeadIcon)} alt={entry.NickName} width="48" height="48" />
-                                                <div class="player-name">{entry.NickName}</div>
+                                            <div class="col player" title="${entry.Id}">
+                                                <img class="player-head" src="${headIconUrl(entry.HeadIcon)}" alt="${entry.NickName}" width="48" height="48" />
+                                                <div class="player-name">${entry.NickName}</div>
                                             </div>
 
                                             <div class="col score">
-                                                <button class="score-details" data-id={entry.Id}>
-                                                    {(entry.Score || 0).toLocaleString('en-US')}
+                                                <button class="score-details" data-id="${entry.Id}">
+                                                    ${(entry.Score || 0).toLocaleString('en-US')}
                                                 </button>
                                             </div>
                                         </div>
-                                    ))}
+                                    `,
+                                        )
+                                        .join('')}
 
-                                    {rd.Self?.Teams?.length && (
-                                        <div class="grid-row self-row" data-id={rd.Self.Id}>
+                                    ${
+                                        rd.Self?.Teams?.length
+                                            ? `
+                                        <div class="grid-row self-row" data-id="${rd.Self.Id}">
                                             <div class="col rank">
-                                                <div class="rank-num">{rd.Self.Rank}</div>
+                                                <div class="rank-num">${rd.Self.Rank}</div>
                                             </div>
 
-                                            <div class="col player" title={rd.Self.Id}>
-                                                <img class="player-head" src={headIconUrl(rd.Self.HeadIcon)} alt={rd.Self.NickName} width="48" height="48" />
-                                                <div class="player-name">{rd.Self.NickName}</div>
+                                            <div class="col player" title="${rd.Self.Id}">
+                                                <img class="player-head" src="${headIconUrl(rd.Self.HeadIcon)}" alt="${rd.Self.NickName}" width="48" height="48" />
+                                                <div class="player-name">${rd.Self.NickName}</div>
                                             </div>
 
                                             <div class="col score">
-                                                <button class="score-details" data-id={rd.Self.Id}>
-                                                    {rd.Self.Score?.toLocaleString('en-US')}
+                                                <button class="score-details" data-id="${rd.Self.Id}">
+                                                    ${rd.Self.Score?.toLocaleString('en-US')}
                                                 </button>
                                             </div>
                                         </div>
-                                    )}
+                                    `
+                                            : ''
+                                    }
                                 </div>
                             </div>
-                        );
+                    `;
                     })
-                }
+                    .join('')}
             </div>
 
             <div class="char-usage tab-panel" id="char-usage" hidden>
                 <div class="leaderboard-header">
                     <h2>Trekker usage in top 100</h2>
-                    {
-                        Object.keys(floor || {}).length > 1 ? (
+                    ${
+                        Object.keys(floorData || {}).length > 1
+                            ? `
                             <div class="floor-tabs-wrapper">
                                 <nav class="floor-tabs">
                                     <button class="floor-tab active" data-floor="all">
                                         All
                                     </button>
-                                    {Object.entries(floor || {}).map(([fid, f]) => (
-                                        <button class="floor-tab" data-floor={String(fid)}>
-                                            {f.name}
+                                    ${Object.entries(floorData || {})
+                                        .map(
+                                            ([fid, f]) => `
+                                        <button class="floor-tab" data-floor="${String(fid)}">
+                                            ${f.name}
                                         </button>
-                                    ))}
+                                    `,
+                                        )
+                                        .join('')}
                                 </nav>
                             </div>
-                        ) : null
+                    `
+                            : ''
                     }
                 </div>
+
                 <div class="usage-grid">
                     <div class="grid-header">
                         <div class="col rank">Rank</div>
@@ -203,66 +210,81 @@ const allData = region['all'] || {};
                         <div class="col uses">Uses</div>
                     </div>
 
-                    {
-                        Object.keys(region).map((rk) => {
-                            const rd = region[rk] || {};
-                            const floorKeys = ['all', ...Object.keys(floor || {})];
-                            return floorKeys.map((fk) => {
-                                const list = (rd.UsageByFloor && rd.UsageByFloor[fk]) || [];
-                                return (
-                                    <div class="region-data" data-region={rk} data-floor={String(fk)} hidden={rk !== defaultRegion || fk !== 'all'}>
-                                        {list.length ? (
-                                            list.map((item) => (
-                                                <div class="grid-row" data-id={item.id}>
+                    ${Object.keys(regionData)
+                        .map((rk) => {
+                            const rd = regionData[rk] || {};
+                            const floorKeys = ['all', ...Object.keys(floorData || {})];
+                            return floorKeys
+                                .map((fk) => {
+                                    const list = (rd.UsageByFloor && rd.UsageByFloor[fk]) || [];
+                                    return `
+                                    <div class="region-data" data-region="${rk}" data-floor="${String(fk)}" ${rk !== 'en' || fk !== 'all' ? 'hidden' : ''}>
+                                        ${
+                                            list.length
+                                                ? list
+                                                      .map(
+                                                          (item) => `
+                                                <div class="grid-row" data-id="${item.id}">
                                                     <div class="col rank">
-                                                        <div class="rank-num">{item.rank}</div>
+                                                        <div class="rank-num">${item.rank}</div>
                                                     </div>
 
                                                     <div class="col char">
-                                                        <a class="char-link" href={`/trekker/${item.id}`}>
-                                                            <img class="char-icon" src={`https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${item.id}02_XXL.webp`} alt={item.name} title={item.name} width="48" height="48" />
-                                                            <div class="player-name">{item.name}</div>
+                                                        <a class="char-link" href="/trekker/${item.id}">
+                                                            <img class="char-icon" src="https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${item.id}02_XXL.webp" alt="${item.name}" title="${item.name}" width="48" height="48" />
+                                                            <div class="player-name">${item.name}</div>
                                                         </a>
                                                     </div>
 
-                                                    <div class="col uses" title={item.count === 1 && item.users && item.users.length === 1 ? item.users[0].id : undefined}>
-                                                        {item.count === 1 && item.users && item.users.length === 1 ? `#${item.users[0].rank} ${item.users[0].name}` : item.count}
+                                                    <div class="col uses" ${item.count === 1 && item.users && item.users.length === 1 ? `title="${item.users[0].id}"` : ''}>
+                                                        ${item.count === 1 && item.users && item.users.length === 1 ? `#${item.users[0].rank} ${item.users[0].name}` : item.count}
                                                     </div>
                                                 </div>
-                                            ))
-                                        ) : (
+                                        `,
+                                                      )
+                                                      .join('')
+                                                : `
                                             <div class="grid-row">
                                                 <div class="col">No usage data</div>
                                             </div>
-                                        )}
+                                        `
+                                        }
                                     </div>
-                                );
-                            });
+                            `;
+                                })
+                                .join('');
                         })
-                    }
+                        .join('')}
                 </div>
             </div>
 
             <div class="team-usage tab-panel" id="team-usage" hidden>
                 <div class="leaderboard-header">
                     <h2>Team usage in top 100</h2>
-                    {
-                        Object.keys(floor || {}).length > 1 ? (
+                    ${
+                        Object.keys(floorData || {}).length > 1
+                            ? `
                             <div class="floor-tabs-wrapper">
                                 <nav class="floor-tabs">
                                     <button class="floor-tab active" data-floor="all">
                                         All
                                     </button>
-                                    {Object.entries(floor || {}).map(([fid, f]) => (
-                                        <button class="floor-tab" data-floor={String(fid)}>
-                                            {f.name}
+                                    ${Object.entries(floorData || {})
+                                        .map(
+                                            ([fid, f]) => `
+                                        <button class="floor-tab" data-floor="${String(fid)}">
+                                            ${f.name}
                                         </button>
-                                    ))}
+                                    `,
+                                        )
+                                        .join('')}
                                 </nav>
                             </div>
-                        ) : null
+                    `
+                            : ''
                     }
                 </div>
+
                 <div class="usage-grid">
                     <div class="grid-header">
                         <div class="col rank">Rank</div>
@@ -270,73 +292,92 @@ const allData = region['all'] || {};
                         <div class="col uses">Uses</div>
                     </div>
 
-                    {
-                        Object.keys(region).map((rk) => {
-                            const rd = region[rk] || {};
-                            const floorKeys = ['all', ...Object.keys(floor || {})];
-                            return floorKeys.map((fk) => {
-                                const list = (rd.UsageTeamByFloor && rd.UsageTeamByFloor[fk]) || [];
-                                return (
-                                    <div class="region-data" data-region={rk} data-floor={String(fk)} hidden={rk !== defaultRegion || fk !== 'all'}>
-                                        {list.length ? (
-                                            list.map((item) => (
-                                                <div class="grid-row" data-key={item.key}>
+                    ${Object.keys(regionData)
+                        .map((rk) => {
+                            const rd = regionData[rk] || {};
+                            const floorKeys = ['all', ...Object.keys(floorData || {})];
+                            return floorKeys
+                                .map((fk) => {
+                                    const list = (rd.UsageTeamByFloor && rd.UsageTeamByFloor[fk]) || [];
+                                    return `
+                                    <div class="region-data" data-region="${rk}" data-floor="${String(fk)}" ${rk !== 'en' || fk !== 'all' ? 'hidden' : ''}>
+                                        ${
+                                            list.length
+                                                ? list
+                                                      .map(
+                                                          (item) => `
+                                                <div class="grid-row" data-key="${item.key}">
                                                     <div class="col rank">
-                                                        <div class="rank-num">{item.rank}</div>
+                                                        <div class="rank-num">${item.rank}</div>
                                                     </div>
 
                                                     <div class="col team">
                                                         <div class="team-icons">
-                                                            {item.members.map((id) => (
-                                                                <a class="team-char" href={`/trekker/${id}`}>
-                                                                    <img class="char-icon" src={`https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${id}02_XXL.webp`} alt={characterIdData[id]} title={characterIdData[id]} width="48" height="48" />
+                                                            ${item.members
+                                                                .map(
+                                                                    (id) => `
+                                                                <a class="team-char" href="/trekker/${id}">
+                                                                    <img class="char-icon" src="https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${id}02_XXL.webp" alt="${characterIdData[id]}" title="${characterIdData[id]}" width="48" height="48" />
                                                                 </a>
-                                                            ))}
+                                                            `,
+                                                                )
+                                                                .join('')}
                                                         </div>
-                                                        <div class="team-name">{item.name}</div>
+                                                        <div class="team-name">${item.name}</div>
                                                     </div>
 
                                                     <div class="col uses">
-                                                        {item.count}
-                                                        <button class="team-top" data-id={item.topUser.id} title={item.topUser.id}>
-                                                            {`#${item.topUser.rank} ${item.topUser.name}: ${!isBB ? `${(Math.abs(item.topUser.teamScore) / 1000).toLocaleString('en-US')}s` : item.topUser.teamScore.toLocaleString('en-US')}`}
+                                                        ${item.count}
+                                                        <button class="team-top" data-id="${item.topUser.id}" title="${item.topUser.id}">
+                                                            ${`#${item.topUser.rank} ${item.topUser.name}: ${!isBB ? `${(Math.abs(item.topUser.teamScore) / 1000).toLocaleString('en-US')}s` : item.topUser.teamScore.toLocaleString('en-US')}`}
                                                         </button>
                                                     </div>
                                                 </div>
-                                            ))
-                                        ) : (
+                                        `,
+                                                      )
+                                                      .join('')
+                                                : `
                                             <div class="grid-row">
                                                 <div class="col">No team usage data</div>
                                             </div>
-                                        )}
+                                        `
+                                        }
                                     </div>
-                                );
-                            });
+                            `;
+                                })
+                                .join('');
                         })
-                    }
+                        .join('')}
                 </div>
             </div>
 
             <div class="team-usage tab-panel" id="team-score" hidden>
                 <div class="leaderboard-header">
                     <h2>Team score in top 100</h2>
-                    {
-                        Object.keys(floor || {}).length > 1 ? (
+                    ${
+                        Object.keys(floorData || {}).length > 1
+                            ? `
                             <div class="floor-tabs-wrapper">
                                 <nav class="floor-tabs">
                                     <button class="floor-tab active" data-floor="all">
                                         All
                                     </button>
-                                    {Object.entries(floor || {}).map(([fid, f]) => (
-                                        <button class="floor-tab" data-floor={String(fid)}>
-                                            {f.name}
+                                    ${Object.entries(floorData || {})
+                                        .map(
+                                            ([fid, f]) => `
+                                        <button class="floor-tab" data-floor="${String(fid)}">
+                                            ${f.name}
                                         </button>
-                                    ))}
+                                    `,
+                                        )
+                                        .join('')}
                                 </nav>
                             </div>
-                        ) : null
+                    `
+                            : ''
                     }
                 </div>
+
                 <div class="usage-grid">
                     <div class="grid-header">
                         <div class="col rank">Rank</div>
@@ -344,76 +385,85 @@ const allData = region['all'] || {};
                         <div class="col score">Score</div>
                     </div>
 
-                    {
-                        Object.keys(region).map((rk) => {
-                            const rd = region[rk] || {};
-                            const floorKeys = ['all', ...Object.keys(floor || {})];
-                            return floorKeys.map((fk) => {
-                                const list = (rd.ScoreTeamByFloor && rd.ScoreTeamByFloor[fk]) || [];
-                                return (
-                                    <div class="region-data" data-region={rk} data-floor={String(fk)} hidden={rk !== defaultRegion || fk !== 'all'}>
-                                        {list.length ? (
-                                            list.map((item) => (
-                                                <div class="grid-row" data-key={item.key}>
+                    ${Object.keys(regionData)
+                        .map((rk) => {
+                            const rd = regionData[rk] || {};
+                            const floorKeys = ['all', ...Object.keys(floorData || {})];
+                            return floorKeys
+                                .map((fk) => {
+                                    const list = (rd.ScoreTeamByFloor && rd.ScoreTeamByFloor[fk]) || [];
+                                    return `
+                                    <div class="region-data" data-region="${rk}" data-floor="${String(fk)}" ${rk !== 'en' || fk !== 'all' ? 'hidden' : ''}>
+                                        ${
+                                            list.length
+                                                ? list
+                                                      .map(
+                                                          (item) => `
+                                                <div class="grid-row" data-key="${item.key}">
                                                     <div class="col rank">
-                                                        <div class="rank-num">{item.rank}</div>
+                                                        <div class="rank-num">${item.rank}</div>
                                                     </div>
 
                                                     <div class="col team">
                                                         <div class="team-icons">
-                                                            {item.members.map((id) => (
-                                                                <a class="team-char" href={`/trekker/${id}`}>
-                                                                    <img class="char-icon" src={`https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${id}02_XXL.webp`} alt={characterIdData[id]} title={characterIdData[id]} width="48" height="48" />
+                                                            ${item.members
+                                                                .map(
+                                                                    (id) => `
+                                                                <a class="team-char" href="/trekker/${id}">
+                                                                    <img class="char-icon" src="https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${id}02_XXL.webp" alt="${characterIdData[id]}" title="${characterIdData[id]}" width="48" height="48" />
                                                                 </a>
-                                                            ))}
+                                                            `,
+                                                                )
+                                                                .join('')}
                                                         </div>
 
-                                                        <div class="team-name">{item.name}</div>
+                                                        <div class="team-name">${item.name}</div>
                                                     </div>
 
                                                     <div class="col uses">
-                                                        <button class="all-score">{!isBB ? `${(Math.abs(item.topUser.teamScore) / 1000).toLocaleString('en-US')}s` : item.topUser.teamScore.toLocaleString('en-US')}</button>
+                                                        <button class="all-score">${!isBB ? `${(Math.abs(item.topUser.teamScore) / 1000).toLocaleString('en-US')}s` : item.topUser.teamScore.toLocaleString('en-US')}</button>
 
-                                                        <button class="team-top" data-id={item.topUser.id} title={item.topUser.id}>
-                                                            {`#${item.topUser.rank} ${item.topUser.name}`}
+                                                        <button class="team-top" data-id="${item.topUser.id}" title="${item.topUser.id}">
+                                                            ${`#${item.topUser.rank} ${item.topUser.name}`}
                                                         </button>
                                                     </div>
                                                 </div>
-                                            ))
-                                        ) : (
+                                        `,
+                                                      )
+                                                      .join('')
+                                                : `
                                             <div class="grid-row">
                                                 <div class="col">No team usage data</div>
                                             </div>
-                                        )}
+                                        `
+                                        }
                                     </div>
-                                );
-                            });
+                            `;
+                                })
+                                .join('');
                         })
-                    }
-                </div>
-            </div>
-
-            <div id="all-team-modal" class="team-modal hidden">
-                <div class="modal-backdrop" id="all-team-modal-backdrop"></div>
-                <div class="modal-panel">
-                    <button class="modal-close" id="all-team-modal-close">×</button>
-                    <div class="modal-content" id="all-team-modal-content"></div>
-                </div>
-            </div>
-
-            <div id="team-modal" class="team-modal hidden">
-                <div class="modal-backdrop" id="team-modal-backdrop"></div>
-                <div class="modal-panel">
-                    <button class="modal-close" id="team-modal-close">×</button>
-                    <div class="modal-content" id="team-modal-content"></div>
+                        .join('')}
                 </div>
             </div>
         </div>
-    </div>
-</Layout>
 
-<script>
-    // @ts-nocheck
+        <div id="all-team-modal" class="team-modal hidden">
+            <div class="modal-backdrop" id="all-team-modal-backdrop"></div>
+            <div class="modal-panel">
+                <button class="modal-close" id="all-team-modal-close">×</button>
+                <div class="modal-content" id="all-team-modal-content"></div>
+            </div>
+        </div>
+
+        <div id="team-modal" class="team-modal hidden">
+            <div class="modal-backdrop" id="team-modal-backdrop"></div>
+            <div class="modal-panel">
+                <button class="modal-close" id="team-modal-close">×</button>
+                <div class="modal-content" id="team-modal-content"></div>
+            </div>
+        </div>
+    `;
+
     let currentUpdateTime = new Date(+document.querySelector('.update-time')?.dataset.time || Date.now());
 
     function updateDisplayedTime() {
@@ -446,15 +496,6 @@ const allData = region['all'] || {};
         return relativeTime;
     }
 
-    const pageEl = document.querySelector('.page');
-
-    const pageData = JSON.parse(pageEl.dataset.json);
-    const defaultRegion = pageEl.dataset.region;
-    const removedMap = JSON.parse(pageEl.dataset.removed);
-    const floorMap = JSON.parse(pageEl.dataset.floor);
-    const charMap = JSON.parse(pageEl.dataset.chars);
-    const isBB = pageEl.dataset.isbb === 'true';
-
     function headIconUrl(icon) {
         const prefix = icon > 100000 || [101, 102].includes(icon) ? 'player' : '';
         const id = icon === 101 ? 10001 : icon === 102 ? 10101 : icon;
@@ -477,7 +518,7 @@ const allData = region['all'] || {};
 
         const teamsHtml = entry.Teams.sort((a, b) => a.LevelId - b.LevelId)
             .map((t, i) => {
-                const levelName = floorMap[t.LevelId]?.name;
+                const levelName = floorData[t.LevelId]?.name;
                 let titleStr = `Team ${i + 1}: `;
                 if (levelName) titleStr += `${levelName} • `;
                 titleStr += (t.LevelScore || t.Time / 1000).toLocaleString('en-US');
@@ -485,7 +526,7 @@ const allData = region['all'] || {};
                 if (t.BuildScore) titleStr += ` • Record: ${t.RecordRank} (${t.BuildScore})`;
 
                 const charsHtml = t.Chars.map((c) => {
-                    const charName = charMap[c.Id];
+                    const charName = characterIdData[c.Id];
                     return `
                         <a class="modal-char-card" href="/trekker/${c.Id}" title="${charName}">
                             <div class="modal-char-image" style="background-image: url(https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${c.Id}02_XXL.webp);"></div>
@@ -656,8 +697,28 @@ const allData = region['all'] || {};
         if (e.key === 'Escape') closeModal(e);
     });
 
+    document.addEventListener('click', (e) => {
+        const tab = e.target.closest('.tab');
+        if (!tab) return;
+
+        const container = tab.closest('.tabs');
+        const localTabs = container ? container.querySelectorAll('.tab') : document.querySelectorAll('.tab');
+
+        localTabs.forEach((t) => t.classList.toggle('active', t === tab));
+
+        const targetPanelId = tab.dataset.tab;
+        if (!targetPanelId) return;
+        const targetPanel = document.getElementById(targetPanelId);
+        if (!targetPanel) return;
+
+        const panels = document.querySelectorAll('.tab-panel');
+        panels.forEach((p) => {
+            p.hidden = p.id !== targetPanelId;
+        });
+    });
+
     const regionTabsEls = document.querySelectorAll('.region-tabs .tab');
-    let currentRegion = defaultRegion;
+    let currentRegion = 'en';
     const selectedFloor = { 'char-usage': 'all', 'team-usage': 'all' };
 
     function showRegion(r) {
@@ -679,7 +740,7 @@ const allData = region['all'] || {};
     }
 
     regionTabsEls.forEach((btn) => btn.addEventListener('click', () => showRegion(btn.dataset.tab)));
-    showRegion(defaultRegion);
+    showRegion('en');
 
     document.addEventListener('click', (ev) => {
         const floorBtn = ev.target.closest('.floor-tab');
@@ -696,9 +757,9 @@ const allData = region['all'] || {};
         const btn = ev.target.closest('.score-details, .team-top, .all-score');
         if (!btn) return;
         const regionEl = btn.closest('.region-data');
-        const region = regionEl?.dataset.region || defaultRegion;
+        const region = regionEl?.dataset.region;
 
-        const rd = pageData[region] || {};
+        const rd = regionData[region] || {};
 
         if (btn.classList.contains('all-score')) {
             const row = btn.closest('.grid-row');
@@ -718,8 +779,8 @@ const allData = region['all'] || {};
     });
 </script>
 
-<style>
-    .page {
+<style is:global>
+    .lb-page {
         .header {
             display: flex;
             position: sticky;
@@ -1050,9 +1111,6 @@ const allData = region['all'] || {};
             }
         }
     }
-</style>
-
-<style is:global>
     .team-modal.hidden {
         display: none;
     }

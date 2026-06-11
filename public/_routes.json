@@ -4,11 +4,9 @@
         "/autumnvn",
         "/build/*",
         "/infodoc/*",
-        "/lb/*",
         "/og/*"
     ],
     "exclude": [
-        "/build",
-        "/lb"
+        "/build"
     ]
 }

@@ -409,6 +409,34 @@ if (import.meta.env.SSR) {
         }
     }
 
+    .tabs-wrapper {
+        margin-left: auto;
+
+        .tabs {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+
+            .tab {
+                cursor: pointer;
+                border: none;
+                background: transparent;
+                padding: 0.5rem;
+                color: var(--muted);
+                font-size: 1rem;
+
+                &:hover {
+                    color: var(--text);
+                }
+
+                &.active {
+                    color: var(--text);
+                    font-weight: 700;
+                }
+            }
+        }
+    }
+
     .indent {
         margin-left: 1rem !important;
     }
