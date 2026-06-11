@@ -21,7 +21,7 @@ const { href, name, desc, desc2, star, image, inset = 0, element, elementSize = 
 
 <div class={`card-border ${star ? `star${star}` : ''}`}>
     <a href={href} class="card">
-        <div class="image" style={image ? `background-image: url(${(await getImage({ src: image, ...(await inferRemoteSize(image).then((size) => (size.width < size.height ? { width: 330, height: (330 * size.height) / size.width } : { height: 330, width: (330 * size.width) / size.height }))) })).src}); inset: ${inset}px; background-position: ${position};` : undefined}></div>
+        <div class="image" style={image ? `background-image: url(${(await getImage({ src: image, ...(await inferRemoteSize(image).then((size) => (size?.width && size?.height ? (size.width < size.height ? { width: 330, height: (330 * size.height) / size.width } : { height: 330, width: (330 * size.width) / size.height }) : { width: 330, height: 330 }))) })).src}); inset: ${inset}px; background-position: ${position};` : undefined}></div>
         {
             name && (
                 <div class="text">
