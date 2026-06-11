@@ -393,6 +393,14 @@ const allData = region['all'] || {};
                 </div>
             </div>
 
+            <div id="all-team-modal" class="team-modal hidden">
+                <div class="modal-backdrop" id="all-team-modal-backdrop"></div>
+                <div class="modal-panel">
+                    <button class="modal-close" id="all-team-modal-close">×</button>
+                    <div class="modal-content" id="all-team-modal-content"></div>
+                </div>
+            </div>
+
             <div id="team-modal" class="team-modal hidden">
                 <div class="modal-backdrop" id="team-modal-backdrop"></div>
                 <div class="modal-panel">
@@ -447,11 +455,6 @@ const allData = region['all'] || {};
     const charMap = JSON.parse(pageEl.dataset.chars);
     const isBB = pageEl.dataset.isbb === 'true';
 
-    const modal = document.getElementById('team-modal');
-    const modalContent = document.getElementById('team-modal-content');
-    const modalClose = document.getElementById('team-modal-close');
-    const modalBackdrop = document.getElementById('team-modal-backdrop');
-
     function headIconUrl(icon) {
         const prefix = icon > 100000 || [101, 102].includes(icon) ? 'player' : '';
         const id = icon === 101 ? 10001 : icon === 102 ? 10101 : icon;
@@ -459,218 +462,135 @@ const allData = region['all'] || {};
     }
 
     function openModal(entry) {
-        modalContent.innerHTML = '';
-        const h = document.createElement('div');
-        h.className = 'modal-heading';
+        const modal = document.querySelector('#team-modal');
+        const modalContent = document.querySelector('#team-modal-content');
+        const modalClose = document.querySelector('#team-modal-close');
+        const modalBackdrop = document.querySelector('#team-modal-backdrop');
 
-        const ph = document.createElement('img');
-        ph.className = 'player-head modal-player-head';
-        const phUrl = headIconUrl(entry.HeadIcon);
-        if (phUrl) ph.src = phUrl;
-        ph.alt = entry.NickName;
-        ph.width = 48;
-        ph.height = 48;
-        h.appendChild(ph);
+        const playerHeadUrl = headIconUrl(entry.HeadIcon);
+        const headingHtml = `
+            <div class="modal-heading">
+                ${playerHeadUrl ? `<img class="player-head modal-player-head" src="${playerHeadUrl}" alt="${entry.NickName}" width="48" height="48">` : ''}
+                <div>${entry.NickName} • Rank: ${entry.Rank}</div>
+            </div>
+        `;
 
-        const titleText = document.createElement('div');
-        titleText.textContent = `${entry.NickName} • Rank: ${entry.Rank}`;
-        h.appendChild(titleText);
+        const teamsHtml = entry.Teams.sort((a, b) => a.LevelId - b.LevelId)
+            .map((t, i) => {
+                const levelName = floorMap[t.LevelId]?.name;
+                let titleStr = `Team ${i + 1}: `;
+                if (levelName) titleStr += `${levelName} • `;
+                titleStr += (t.LevelScore || t.Time / 1000).toLocaleString('en-US');
+                if (!isBB) titleStr += 's';
+                if (t.BuildScore) titleStr += ` • Record: ${t.RecordRank} (${t.BuildScore})`;
 
-        modalContent.appendChild(h);
+                const charsHtml = t.Chars.map((c) => {
+                    const charName = charMap[c.Id];
+                    return `
+                        <a class="modal-char-card" href="/trekker/${c.Id}" title="${charName}">
+                            <div class="modal-char-image" style="background-image: url(https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${c.Id}02_XXL.webp);"></div>
+                            <div class="modal-char-label">${charName} • Lv${c.Level}</div>
+                        </a>
+                    `;
+                }).join('');
 
-        entry.Teams.sort((a, b) => a.LevelId - b.LevelId).forEach((t, i) => {
-            const teamEl = document.createElement('div');
-            teamEl.className = 'modal-team';
-
-            const teamHeader = document.createElement('div');
-            teamHeader.className = 'modal-team-header';
-
-            const title = document.createElement('div');
-            title.className = 'modal-team-title';
-            const levelName = floorMap[t.LevelId]?.name;
-            let titleStr = `Team ${i + 1}: `;
-            if (levelName) titleStr += `${levelName} • `;
-            titleStr += (t.LevelScore || t.Time / 1000).toLocaleString('en-US');
-            if (!isBB) titleStr += 's';
-            if (t.BuildScore) titleStr += ` • Record: ${t.RecordRank} (${t.BuildScore})`;
-            title.textContent = titleStr;
-            teamHeader.appendChild(title);
-
-            teamEl.appendChild(teamHeader);
-
-            const charsWrap = document.createElement('div');
-            charsWrap.className = 'modal-chars';
-            t.Chars.forEach((c) => {
-                const charName = charMap[c.Id];
-                const card = document.createElement('a');
-                card.className = 'modal-char-card';
-                card.href = `/trekker/${c.Id}`;
-                card.title = charName;
-
-                const img = document.createElement('div');
-                img.className = 'modal-char-image';
-                img.style.backgroundImage = `url(https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/head/head_${c.Id}02_XXL.webp)`;
-                card.appendChild(img);
-
-                const label = document.createElement('div');
-                label.className = 'modal-char-label';
-                label.textContent = `${charName} • Lv${c.Level}`;
-                card.appendChild(label);
-
-                charsWrap.appendChild(card);
-            });
-
-            let discsWrap = null;
-            if (t.Discs) {
-                discsWrap = document.createElement('div');
-                discsWrap.className = 'modal-discs';
-                const discsList = document.createElement('div');
-                discsList.className = 'modal-discs-list';
-                t.Discs.forEach((d) => {
-                    const discLink = document.createElement('a');
-                    discLink.className = 'modal-disc';
-                    discLink.href = `/disc/${d}`;
-                    discLink.title = d;
-                    const discImg = document.createElement('img');
-                    discImg.className = 'modal-disc-image';
-                    const discIdStr = String(d);
-                    const discAssetId = discIdStr.length > 2 ? discIdStr.slice(2) : discIdStr;
-                    discImg.src = `https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/outfit/outfit_${discAssetId}.webp`;
-                    discImg.alt = String(d);
-                    discImg.width = 48;
-                    discImg.height = 48;
-                    discLink.appendChild(discImg);
-                    discsList.appendChild(discLink);
-                });
-                discsWrap.appendChild(discsList);
-            }
-
-            let notesWrap = null;
-            if (t.Notes) {
-                notesWrap = document.createElement('div');
-                notesWrap.className = 'modal-notes';
-                const notesList = document.createElement('div');
-                notesList.className = 'modal-notes-list';
-                t.Notes.forEach((n) => {
-                    const note = document.createElement('div');
-                    note.className = 'modal-note';
-                    note.title = `${n.Tid}`;
-
-                    const noteImg = document.createElement('img');
-                    noteImg.className = 'modal-note-image';
-                    noteImg.src = `https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/note/note_${n.Tid}_S.webp`;
-                    noteImg.alt = String(n.Tid);
-                    noteImg.width = 36;
-                    noteImg.height = 36;
-                    note.appendChild(noteImg);
-
-                    const qty = document.createElement('div');
-                    qty.className = 'modal-note-qty';
-                    qty.textContent = `x${n.Qty}`;
-                    note.appendChild(qty);
-
-                    notesList.appendChild(note);
-                });
-                notesWrap.appendChild(notesList);
-            }
-
-            let secWrap = null;
-            if (t.Discs) {
-                secWrap = document.createElement('div');
-                secWrap.className = 'modal-active-secondaries';
-
-                const discPrefixes = t.Discs.slice(0, 3).map((d) => {
-                    const ds = String(d);
-                    return ds.slice(2);
-                });
-                const secList = document.createElement('div');
-                secList.className = 'modal-active-secondaries-list';
-                const rows = 2;
-                const cols = 3;
-                const activeIds = t.ActiveSecondaryIds?.map(String) || [];
-                const perColMatches = [];
-                for (let c = 0; c < cols; c++) {
-                    const prefix = discPrefixes[c];
-                    perColMatches[c] = activeIds.filter((s) => s.startsWith(prefix));
+                let discsHtml = '';
+                if (t.Discs) {
+                    const discsListHtml = t.Discs.map((d) => {
+                        const discIdStr = String(d);
+                        const discAssetId = discIdStr.length > 2 ? discIdStr.slice(2) : discIdStr;
+                        return `
+                            <a class="modal-disc" href="/disc/${d}" title="${d}">
+                                <img class="modal-disc-image" src="https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/outfit/outfit_${discAssetId}.webp" alt="${d}" width="48" height="48">
+                            </a>
+                        `;
+                    }).join('');
+                    discsHtml = `<div class="modal-discs"><div class="modal-discs-list">${discsListHtml}</div></div>`;
                 }
 
-                for (let r = 0; r < rows; r++) {
-                    for (let c = 0; c < cols; c++) {
-                        const matches = perColMatches[c];
-                        const matchedId = matches[r];
-                        const sEl = document.createElement('div');
-                        sEl.className = 'modal-secondary-id';
-                        if (matchedId) {
-                            const last = matchedId.slice(-1);
-                            const numEmojis = { '1': '1️⃣', '2': '2️⃣', '3': '3️⃣', '4': '4️⃣', '5': '5️⃣' };
-                            sEl.textContent = numEmojis[last] || '✅';
+                let notesHtml = '';
+                if (t.Notes) {
+                    const notesListHtml = t.Notes.map(
+                        (n) => `
+                        <div class="modal-note" title="${n.Tid}">
+                            <img class="modal-note-image" src="https://chino.is-a.dev/cdn-cgi/image/format=avif/https://raw.githubusercontent.com/AutumnVN/ssassets/refs/heads/main/export/assets/assetbundles/icon/note/note_${n.Tid}_S.webp" alt="${n.Tid}" width="36" height="36">
+                            <div class="modal-note-qty">x${n.Qty}</div>
+                        </div>
+                    `,
+                    ).join('');
+                    notesHtml = `<div class="modal-notes"><div class="modal-notes-list">${notesListHtml}</div></div>`;
+                }
+
+                let secHtml = '';
+                if (t.Discs) {
+                    const discPrefixes = t.Discs.slice(0, 3).map((d) => String(d).slice(2));
+                    const activeIds = t.ActiveSecondaryIds?.map(String) || [];
+                    const numEmojis = { '1': '1️⃣', '2': '2️⃣', '3': '3️⃣', '4': '4️⃣', '5': '5️⃣' };
+                    let gridItemsHtml = '';
+
+                    for (let r = 0; r < 2; r++) {
+                        for (let c = 0; c < 3; c++) {
                             const prefix = discPrefixes[c];
-                            sEl.title = `${prefix} harmony ${r + 1}`;
-                        } else {
-                            sEl.textContent = '❌';
-                            const prefix = discPrefixes[c];
-                            sEl.title = `${prefix} harmony ${r + 1}`;
+                            const matches = activeIds.filter((s) => s.startsWith(prefix));
+                            const matchedId = matches[r];
+
+                            if (matchedId) {
+                                const last = matchedId.slice(-1);
+                                gridItemsHtml += `<div class="modal-secondary-id" title="${prefix} harmony ${r + 1}">${numEmojis[last] || '✅'}</div>`;
+                            } else {
+                                gridItemsHtml += `<div class="modal-secondary-id" title="${prefix} harmony ${r + 1}">❌</div>`;
+                            }
                         }
-                        secList.appendChild(sEl);
                     }
+                    secHtml = `
+                        <div class="modal-active-secondaries">
+                            <div class="modal-active-secondaries-list">${gridItemsHtml}</div>
+                        </div>
+                    `;
                 }
-                secWrap.appendChild(secList);
-            }
 
-            const teamRow = document.createElement('div');
-            teamRow.className = 'modal-team-row';
+                const buildLinkHref = t.BuildCode ? `/build/${t.BuildCode}` : '#';
+                const buildLinkTarget = t.BuildCode ? 'target="_blank"' : '';
 
-            const left = document.createElement('div');
-            left.className = 'modal-team-left';
+                return `
+                    <div class="modal-team">
+                        <div class="modal-team-header">
+                            <div class="modal-team-title">${titleStr}</div>
+                        </div>
+                        <div class="modal-team-row">
+                            <div class="modal-team-left">
+                                <div class="modal-chars-row">
+                                    <div class="modal-chars">${charsHtml}</div>
+                                    <div class="modal-build-wrap">
+                                        <a class="modal-build-link" href="${buildLinkHref}" ${buildLinkTarget}>Open build</a>
+                                    </div>
+                                </div>
+                                <div class="modal-discs-and-secondaries">
+                                    ${discsHtml}
+                                    ${secHtml}
+                                </div>
+                                ${notesHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            })
+            .join('');
 
-            const charsRow = document.createElement('div');
-            charsRow.className = 'modal-chars-row';
-            charsRow.appendChild(charsWrap);
-
-            const buildWrapTop = document.createElement('div');
-            buildWrapTop.className = 'modal-build-wrap';
-            const buildLinkTop = document.createElement('a');
-            buildLinkTop.className = 'modal-build-link';
-
-            const buildCode = t.BuildCode || '';
-            if (buildCode) {
-                buildLinkTop.href = `/build/${buildCode}`;
-                buildLinkTop.target = '_blank';
-            } else {
-                buildLinkTop.href = '#';
-                buildLinkTop.removeAttribute('target');
-            }
-            buildLinkTop.textContent = 'Open build';
-            buildWrapTop.appendChild(buildLinkTop);
-
-            charsRow.appendChild(buildWrapTop);
-            left.appendChild(charsRow);
-
-            if (discsWrap) {
-                const discsSecRow = document.createElement('div');
-                discsSecRow.className = 'modal-discs-and-secondaries';
-                discsSecRow.appendChild(discsWrap);
-                if (secWrap) discsSecRow.appendChild(secWrap);
-                left.appendChild(discsSecRow);
-            }
-            if (notesWrap) left.appendChild(notesWrap);
-            teamRow.appendChild(left);
-
-            teamEl.appendChild(teamRow);
-            modalContent.appendChild(teamEl);
-        });
+        modalContent.innerHTML = headingHtml + teamsHtml;
         modal.classList.remove('hidden');
+
+        modalClose.addEventListener('click', closeModal);
+        modalBackdrop.addEventListener('click', closeModal);
     }
 
     function openAllTeamModal(item, regionData) {
-        modalContent.innerHTML = '';
+        const modal = document.querySelector('#all-team-modal');
+        const modalContent = document.querySelector('#all-team-modal-content');
+        const modalClose = document.querySelector('#all-team-modal-close');
+        const modalBackdrop = document.querySelector('#all-team-modal-backdrop');
 
-        const h = document.createElement('div');
-        h.className = 'modal-heading';
-        const titleText = document.createElement('div');
-        titleText.textContent = `${item.name}`;
-        h.appendChild(titleText);
-        modalContent.appendChild(h);
+        modalContent.innerHTML = '';
 
         const users = (item.users || []).slice();
         users.sort((a, b) => {
@@ -679,63 +599,62 @@ const allData = region['all'] || {};
             return isBB ? bScore - aScore : aScore - bScore;
         });
 
-        const list = document.createElement('div');
-        list.className = 'modal-team-list';
+        const rowsHtml = users
+            .map((u) => {
+                const entry = (regionData.Rank || []).find((e) => String(e.Id) === String(u.id)) || (regionData.Self && String(regionData.Self.Id) === String(u.id) ? regionData.Self : null);
+                const dataEntry = entry ? `data-entry='${JSON.stringify(entry).replace(/'/g, '&apos;')}'` : '';
+                const scoreText = !isBB ? `${(Math.abs(u.teamScore) / 1000).toLocaleString('en-US')}s` : (u.teamScore || 0).toLocaleString('en-US');
+                return `
+                    <div class="modal-team-item" tabindex="0" ${dataEntry}>
+                        <div class="modal-team-item-rank">${u.rank}</div>
+                        <img class="modal-team-item-icon" src="${headIconUrl(entry?.HeadIcon)}" alt="${u.name || ''}" width="40" height="40">
+                        <div class="modal-team-item-name" title="${u.id}">${u.name}</div>
+                        <div class="modal-team-item-score">${scoreText}</div>
+                    </div>
+                `;
+            })
+            .join('');
 
-        users.forEach((u) => {
-            const row = document.createElement('div');
-            row.className = 'modal-team-item';
-            row.tabIndex = 0;
+        modalContent.innerHTML = `
+            <div class="modal-heading">
+                <div>${item.name}</div>
+            </div>
+            <div class="modal-team-list">
+                ${rowsHtml}
+            </div>
+        `;
 
-            const rank = document.createElement('div');
-            rank.className = 'modal-team-item-rank';
-            rank.textContent = `${u.rank}`;
-            row.appendChild(rank);
+        const list = modalContent.querySelector('.modal-team-list');
 
-            const entry = (regionData.Rank || []).find((e) => String(e.Id) === String(u.id)) || (regionData.Self && String(regionData.Self.Id) === String(u.id) ? regionData.Self : null);
-
-            const icon = document.createElement('img');
-            icon.className = 'modal-team-item-icon';
-            icon.src = headIconUrl(entry.HeadIcon);
-            icon.alt = u.name || '';
-            icon.width = 40;
-            icon.height = 40;
-            row.appendChild(icon);
-
-            const nameWrap = document.createElement('div');
-            nameWrap.className = 'modal-team-item-name';
-            nameWrap.textContent = `${u.name}`;
-            nameWrap.title = u.id;
-            row.appendChild(nameWrap);
-
-            const score = document.createElement('div');
-            score.className = 'modal-team-item-score';
-            score.textContent = !isBB ? `${(Math.abs(u.teamScore) / 1000).toLocaleString('en-US')}s` : (u.teamScore || 0).toLocaleString('en-US');
-            row.appendChild(score);
-
-            row.addEventListener('click', () => {
-                if (entry) openModal(entry);
-            });
-            row.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && entry) openModal(entry);
-            });
-
-            list.appendChild(row);
+        list.addEventListener('click', handleTrigger);
+        list.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleTrigger(e);
         });
 
-        if (!users.length) {
-            const empty = document.createElement('div');
-            empty.textContent = 'No team entries available';
-            list.appendChild(empty);
+        modal.classList.remove('hidden');
+
+        function handleTrigger(e) {
+            const row = e.target.closest('.modal-team-item');
+            if (row && row.dataset.entry) {
+                openModal(JSON.parse(row.dataset.entry));
+            }
         }
 
-        modalContent.appendChild(list);
-        modal.classList.remove('hidden');
+        modalClose.addEventListener('click', closeModal);
+        modalBackdrop.addEventListener('click', closeModal);
     }
 
-    function closeModal() {
-        modal.classList.add('hidden');
+    function closeModal(e) {
+        const modals = document.querySelectorAll('.team-modal:not(.hidden)');
+        const modal = modals[modals.length - 1];
+        if (modal) {
+            modal.classList.add('hidden');
+        }
     }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal(e);
+    });
 
     const regionTabsEls = document.querySelectorAll('.region-tabs .tab');
     let currentRegion = defaultRegion;
@@ -796,12 +715,6 @@ const allData = region['all'] || {};
         const id = btn.dataset.id;
         const entry = rd.Self && String(rd.Self.Id) === String(id) ? rd.Self : (rd.Rank || []).find((e) => String(e.Id) === String(id));
         if (entry) openModal(entry);
-    });
-
-    modalClose.addEventListener('click', closeModal);
-    modalBackdrop.addEventListener('click', closeModal);
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeModal();
     });
 </script>
 
