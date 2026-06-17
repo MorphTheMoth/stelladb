@@ -148,7 +148,7 @@ const firstIcon = Object.values(floors)[0]?.icon;
                                             </div>
 
                                             <div class="col score">
-                                                <span class="score-details" data-id="${entry.Id}">
+                                                <span data-id="${entry.Id}">
                                                     ${(entry.Score || 0).toLocaleString('en-US')}
                                                 </span>
                                             </div>
@@ -171,7 +171,7 @@ const firstIcon = Object.values(floors)[0]?.icon;
                                             </div>
 
                                             <div class="col score">
-                                                <span class="score-details" data-id="${rd.Self.Id}">
+                                                <span data-id="${rd.Self.Id}">
                                                     ${rd.Self.Score?.toLocaleString('en-US')}
                                                 </span>
                                             </div>
@@ -217,7 +217,7 @@ const firstIcon = Object.values(floors)[0]?.icon;
                     <div class="grid-header">
                         <div class="col rank">Rank</div>
                         <div class="col char">Trekker</div>
-                        <div class="col uses">Uses</div>
+                        <div class="col score">Uses</div>
                     </div>
 
                     ${Object.keys(regionData)
@@ -246,7 +246,7 @@ const firstIcon = Object.values(floors)[0]?.icon;
                                                         </a>
                                                     </div>
 
-                                                    <div class="col uses" ${item.count === 1 && item.users && item.users.length === 1 ? `title="${item.users[0].id}"` : ''}>
+                                                    <div class="col score" ${item.count === 1 && item.users && item.users.length === 1 ? `title="${item.users[0].id}"` : ''}>
                                                         ${item.count === 1 && item.users && item.users.length === 1 ? `#${item.users[0].rank} ${item.users[0].name}` : item.count}
                                                     </div>
                                                 </div>
@@ -299,7 +299,7 @@ const firstIcon = Object.values(floors)[0]?.icon;
                     <div class="grid-header">
                         <div class="col rank">Rank</div>
                         <div class="col team">Team</div>
-                        <div class="col uses">Uses</div>
+                        <div class="col score">Uses</div>
                     </div>
 
                     ${Object.keys(regionData)
@@ -328,8 +328,8 @@ const firstIcon = Object.values(floors)[0]?.icon;
                                                         <div class="team-name">${item.name}</div>
                                                     </div>
 
-                                                    <div class="col uses">
-                                                        <span class="all-score">${item.count}</span>
+                                                    <div class="col score">
+                                                        <span>${item.count}</span>
                                                         <button class="team-top" data-id="${item.topUser.id}" title="${item.topUser.id}">
                                                             ${`#${item.topUser.rank} ${item.topUser.name}: ${!isBB ? `${(Math.abs(item.topUser.teamScore) / 1000).toLocaleString('en-US')}s` : item.topUser.teamScore.toLocaleString('en-US')}`}
                                                         </button>
@@ -414,9 +414,8 @@ const firstIcon = Object.values(floors)[0]?.icon;
                                                         <div class="team-name">${item.name}</div>
                                                     </div>
 
-                                                    <div class="col uses">
-                                                        <span class="all-score">${!isBB ? `${(Math.abs(item.topUser.teamScore) / 1000).toLocaleString('en-US')}s` : item.topUser.teamScore.toLocaleString('en-US')}</span>
-
+                                                    <div class="col score">
+                                                        <span>${!isBB ? `${(Math.abs(item.topUser.teamScore) / 1000).toLocaleString('en-US')}s` : item.topUser.teamScore.toLocaleString('en-US')}</span>
                                                         <button class="team-top" data-id="${item.topUser.id}" title="${item.topUser.id}">
                                                             ${`#${item.topUser.rank} ${item.topUser.name}`}
                                                         </button>
@@ -716,7 +715,7 @@ const firstIcon = Object.values(floors)[0]?.icon;
                 <div class="modal-potential-sections">
                     ${item.members
                         .map((charId) => {
-                            const charName = characterIdData[charId] || charId;
+                            const charName = characterIdData[charId];
                             return `
                             <div class="modal-potential-section">
                                 <div class="modal-section-top">
@@ -754,25 +753,25 @@ const firstIcon = Object.values(floors)[0]?.icon;
                     <div></div>
                     <div class="modal-grid-tabs">
                         <button class="modal-grid-tab active" data-tab="split">Main / Support</button>
-                        <button class="modal-grid-tab" data-tab="total">Total</button>
+                        <button class="modal-grid-tab" data-tab="all">All</button>
                     </div>
-                </div>
-
-                <div class="modal-grid-panel" data-panel="total" hidden>
-                    <div class="modal-grid">${modalGrid(item.discUsage.all, item.count)}</div>
                 </div>
 
                 <div class="modal-grid-panel" data-panel="split">
                     <div class="modal-disc-sections">
                         <div class="modal-disc-section">
-                            <div class="modal-section-header modal-section-header--disc">Main</div>
+                            <div class="modal-section-header-disc">Main</div>
                             <div class="modal-grid">${modalGrid(item.discUsage.main, item.count)}</div>
                         </div>
                         <div class="modal-disc-section">
-                            <div class="modal-section-header modal-section-header--disc">Support</div>
+                            <div class="modal-section-header-disc">Support</div>
                             <div class="modal-grid">${modalGrid(item.discUsage.support, item.count)}</div>
                         </div>
                     </div>
+                </div>
+
+                <div class="modal-grid-panel" data-panel="all" hidden>
+                    <div class="modal-grid">${modalGrid(item.discUsage.all, item.count)}</div>
                 </div>
             </div>
         `;
@@ -1120,13 +1119,8 @@ const firstIcon = Object.values(floors)[0]?.icon;
         }
 
         .players .grid-row:hover {
-            background: var(--bg2);
             cursor: pointer;
-        }
-
-        .players .score-details {
-            color: var(--text);
-            font-weight: 700;
+            background: var(--bg2);
         }
 
         .char-usage .usage-grid .grid-header,
@@ -1175,7 +1169,7 @@ const firstIcon = Object.values(floors)[0]?.icon;
             object-fit: cover;
         }
 
-        .char-usage .col.uses {
+        .char-usage .col.score {
             font-weight: 700;
             text-align: center;
         }
@@ -1198,8 +1192,8 @@ const firstIcon = Object.values(floors)[0]?.icon;
         }
 
         .team-usage .usage-grid .grid-row:hover {
-            background: var(--bg2);
             cursor: pointer;
+            background: var(--bg2);
         }
 
         .team-usage .grid-header .col.team {
@@ -1231,7 +1225,7 @@ const firstIcon = Object.values(floors)[0]?.icon;
             font-weight: 600;
         }
 
-        .team-usage .col.uses {
+        .team-usage .col.score {
             font-weight: 700;
             text-align: center;
         }
@@ -1245,7 +1239,7 @@ const firstIcon = Object.values(floors)[0]?.icon;
             padding: 0;
         }
 
-        .team-usage .all-score {
+        .team-usage .score {
             color: var(--text);
             font-weight: 700;
         }
@@ -1531,11 +1525,13 @@ const firstIcon = Object.values(floors)[0]?.icon;
         gap: 0.5rem;
         font-weight: 700;
         font-size: 1.1rem;
+        height: 40px;
 
         .modal-grid-tabs {
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            padding: 0 0.5rem;
 
             .modal-grid-tab {
                 cursor: pointer;
@@ -1560,17 +1556,15 @@ const firstIcon = Object.values(floors)[0]?.icon;
     .modal-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
-        gap: 0.2rem;
-        padding: 1rem 0;
+        gap: 0.25rem;
+        padding: 0.5rem 0;
     }
 
     .modal-grid-item {
         display: flex;
         flex-direction: column;
         align-items: center;
-        border: 1px solid var(--bg2);
-        border-radius: 6px;
-        padding: 0.3rem 0;
+        padding-bottom: 0.25rem;
 
         a {
             display: contents;
@@ -1627,19 +1621,15 @@ const firstIcon = Object.values(floors)[0]?.icon;
     .modal-potential-sections {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
     }
 
     .modal-potential-section {
-        border: 1px solid var(--bg2);
-        border-radius: 8px;
-        padding: 0.5rem;
+        padding: 0 0.5rem;
 
         .modal-section-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.75rem;
         }
 
         .modal-section-header {
@@ -1661,7 +1651,6 @@ const firstIcon = Object.values(floors)[0]?.icon;
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            margin-bottom: 0.25rem;
 
             .modal-grid-tab {
                 cursor: pointer;
@@ -1679,20 +1668,14 @@ const firstIcon = Object.values(floors)[0]?.icon;
                 }
             }
         }
-
-        .modal-grid {
-            padding: 0.5rem 0;
-        }
     }
 
     .modal-disc-sections {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
-        margin-top: 1.5rem;
 
         .modal-disc-section {
-            .modal-section-header--disc {
+            .modal-section-header-disc {
                 display: flex;
                 justify-content: center;
                 align-items: center;
